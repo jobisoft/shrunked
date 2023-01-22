@@ -2,16 +2,16 @@
   "manifest_version": 2,
   "name": "__MSG_extensionName__",
   "description": "__MSG_extensionDescription__",
-  "version": "5.1",
+  "version": "5.2",
   "applications": {
     "gecko": {
-      "id": "shrunked@darktrojan.net",
+      "id": "shrunked@mllr.pl",
       "strict_min_version": "98.0",
       "strict_max_version": "102.*"
     }
   },
-  "author": "Geoff Lankow",
-  "homepage_url": "https://github.com/darktrojan/shrunked",
+  "author": "Geoff Lankow, memeller",
+  "homepage_url": "https://github.com/memeller/shrunked",
   "icons": {
     "16": "content/icon16.png",
     "32": "content/icon32.png",
@@ -19,14 +19,9 @@
   },
   "default_locale": "en",
   "background": {
-    "scripts": [
-      "background.js"
-    ]
+    "scripts": ["background.js"]
   },
-  "permissions": [
-    "compose",
-    "storage"
-  ],
+  "permissions": ["compose", "storage"],
   "options_ui": {
     "page": "content/config.xhtml"
   },
