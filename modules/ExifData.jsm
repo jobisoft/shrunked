@@ -3,7 +3,7 @@ var EXPORTED_SYMBOLS = ["ExifData"];
 /* globals Shrunked */
 ChromeUtils.defineModuleGetter(this, "Shrunked", "resource://shrunked/Shrunked.jsm");
 
-function ExifData() {}
+function ExifData() { }
 ExifData.prototype = {
   exif1: null,
   exif2: null,
@@ -53,9 +53,9 @@ ExifData.prototype = {
   async read(readable) {
     try {
       this.readable = readable;
-      let array = await this.readable.read(4);
-      if (array[0] != 0xff || array[1] != 0xd8) {
-        throw "Not a JPEG";
+      let array = await this.readable.read(8);
+      if ((array[0] != 0xff || array[1] != 0xd8) || (array[0] != 0x89 || array[1] != 0x50 || array[2] != 0x4E || array[3] != 0x47)) {
+        throw "Not a JPEG/PNG";
       }
       if (array[2] != 0xff || array[3] != 0xe1) {
         throw "No valid EXIF data";

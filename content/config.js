@@ -61,7 +61,7 @@ async function getAll() {
   s_quality.value = prefs["default.quality"];
   cb_resample.checked = prefs["options.resample"];
   cb_exif.checked = prefs["options.exif"];
-  cb_orient.checked = prefs["options.orient"];
+  cb_orient.checked = prefs["options.orientation"];
   cb_gps.checked = prefs["options.gps"];
   // cb_logenabled.checked = prefs["log.enabled"];
   s_resizeonsend.value = prefs.resizeAttachmentsOnSend;

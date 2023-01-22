@@ -193,11 +193,12 @@ async function doResize(tabId, maxWidth, maxHeight, quality) {
     "options.gps": true,
     "options.resample": true,
   });
+
   options = {
-    exif: options.exif,
-    orientation: options.orientation,
-    gps: options.gps,
-    resample: options.resample,
+    exif: options['options.exif'],
+    orientation: options['options.orientation'],
+    gps: options['options.gps'],
+    resample: options['options.resample'],
   };
 
   for (let source of sourceFiles) {
