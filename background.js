@@ -188,17 +188,19 @@ async function doResize(tabId, maxWidth, maxHeight, quality) {
   }
 
   let options = await browser.storage.local.get({
-    "options.exif": true,
-    "options.orientation": true,
-    "options.gps": true,
-    "options.resample": true,
-  });
-
-  options = {
-    exif: options['options.exif'],
-    orientation: options['options.orientation'],
-    gps: options['options.gps'],
-    resample: options['options.resample'],
+     "options.exif": true,
+     "options.orientation": true,
+     "options.gps": true,
+     "options.resample": true,
+     "options.newalgorithm":true,
+   });
+   
+   options = {
+     exif: options['options.exif'],
+     orientation: options['options.orientation'],
+     gps: options['options.gps'],
+     resample: options['options.resample'],
+     newalgorithm: options['options.newalgorithm'],
   };
 
   for (let source of sourceFiles) {

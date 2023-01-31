@@ -17,6 +17,9 @@
   "advanced.resample.label": {
     "message": "Ponowne próbkowanie obrazów za pomocą javascript"
   },
+  "advanced.newalgorithm.label": {
+    "message": "Użyj innego algorytmu do próbkowania (zachowuje przeźroczystość w plikach PNG)"
+  },
   "advanced.resizeonsend.false": {
     "message": "przy dodawaniu załącznika"
   },
