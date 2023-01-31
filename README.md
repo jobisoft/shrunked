@@ -15,11 +15,10 @@ After installing each time a compatible (JPG/PNG) image is attached to/inserted 
 - Resampling finally works  
     A bug caused the resampling to be permanently disabled, even though resampling was enabled in options.  
 - Added new resize algorithm, taken from https://github.com/taisel/JS-Image-Resizer.
-It is used by default, to use the previous algorithm please uncheck the corresponding option in the options panel. The new algorithm works with transparent PNGs, while the previous algorithm adds a black background to previously transparent PNGs when resizing them.
+It is used by default, to use the previous algorithm please uncheck the corresponding option in the options panel. The new algorithm works with transparent PNGs, while the previous algorithm adds a black background to previously transparent PNGs when resizing them.  
     Difference in resizing png from https://www.seekpng.com/ima/u2e6w7w7i1a9y3t4/ (1149x1333px) to 200px width
 
     ![png preview](/images/preview_png.png)
-    <a href="https://www.vecteezy.com/free-vector/sound-wave-background">Sound Wave Background Vectors by Vecteezy</a>
 
     Difference in resizing jpg from https://www.vecteezy.com/vector-art/1957829-tech-background-with-abstract-wave-lines (4900x1960px) to 500px width
 
