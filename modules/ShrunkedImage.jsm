@@ -18,6 +18,7 @@ function ShrunkedImage(source, maxWidth, maxHeight, quality, options) {
     orientation: true,
     gps: true,
     resample: true,
+    newalgorithm:true,
     ...options,
   };
 
@@ -116,24 +117,26 @@ ShrunkedImage.prototype = {
     return new Promise(resolve => {
       let ratio = Math.max(1, image.width / this.maxWidth, image.height / this.maxHeight);
       let resampleRatio = 1;
+      let newResampling=false;
       if (resample && this.options.resample) {
         resampleRatio = Math.min(ratio, 3);
         if (resampleRatio > 2 && resampleRatio < 3) {
           resampleRatio = 2;
         }
+        if(this.options.newalgorithm)
+          newResampling=true;  
       }
-
+      //reset resampleRatio to 1 so that most of the old code can still be reused
       let width = Math.floor(image.width / ratio);
       let height = Math.floor(image.height / ratio);
-
+      
       if (orientation == 90 || orientation == 270) {
         [width, height] = [height, width];
       }
 
       let canvas = getWindow().document.createElementNS(XHTMLNS, "canvas");
-      canvas.width = Math.floor(width * resampleRatio);
-      canvas.height = Math.floor(height * resampleRatio);
-
+      canvas.width = newResampling ? image.width : (Math.floor(width * resampleRatio));
+      canvas.height = newResampling ? image.height : (Math.floor(height * resampleRatio));
       let context = canvas.getContext("2d");
       if (orientation == 90) {
         context.translate(0, canvas.height);
@@ -149,32 +152,55 @@ ShrunkedImage.prototype = {
         image,
         0,
         0,
-        (image.width / ratio) * resampleRatio,
-        (image.height / ratio) * resampleRatio
+        newResampling ? image.width : ((image.width / ratio) * resampleRatio),
+        newResampling ? image.height : ((image.height / ratio) * resampleRatio)
       );
+      if (resampleRatio > 1 || newResampling) {
+        //old algorithm works differently, it starts with an image resized during drawImage
+        if(!newResampling)
+        {
+          let oldData = context.getImageData(0, 0, canvas.width, canvas.height);
+          canvas.width = width;
+          canvas.height = height;
+          let newData = context.createImageData(canvas.width, canvas.height);
 
-      if (resampleRatio > 1) {
-        let oldData = context.getImageData(0, 0, canvas.width, canvas.height);
-        canvas.width = width;
-        canvas.height = height;
-        let newData = context.createImageData(canvas.width, canvas.height);
-
-        let worker = new ChromeWorker("resource://shrunked/worker.js");
-        worker.onmessage = function(event) {
-          context.putImageData(event.data, 0, 0);
-          resolve(canvas);
-        };
-        worker.postMessage({
-          oldData,
-          newData,
-          func:
-            resampleRatio == 3
-              ? "nineResample"
-              : resampleRatio == 2
-              ? "fourResample"
-              : "floatResample",
-          ratio: resampleRatio, // only for floatResample
-        });
+          let worker = new ChromeWorker("resource://shrunked/worker.js");
+          worker.onmessage = function(event) {
+            context.putImageData(event.data, 0, 0);
+            resolve(canvas);
+          };
+          worker.postMessage({
+            oldData,
+            newData,
+            func:
+              resampleRatio == 3
+                ? "nineResample"
+                : resampleRatio == 2
+                ? "fourResample"
+                : "floatResample",
+            ratio: resampleRatio, // only for floatResample
+          });
+        }
+        else
+        {
+          //first get the data for full size image then resize the canvas so it reflects target size
+          let oldData = context.getImageData(0, 0, canvas.width, canvas.height).data;
+          canvas.width = width;
+          canvas.height = height;
+          let newData = context.createImageData(canvas.width, canvas.height);      
+          let worker = new ChromeWorker("resource://shrunked/worker2.js");
+          worker.onmessage = function (event) {
+            var data = newData.data;
+            var length = data.length;
+            for (var x = 0; x < length; ++x) {
+              data[x] = event.data[x] & 0xFF;
+            }
+            context.putImageData(newData, 0, 0);
+            resolve(canvas);
+          }
+          worker.postMessage(["setup", image.width, image.height, width, height, 4, true]);
+          worker.postMessage(["resize", oldData]);
+        }
       } else {
         resolve(canvas);
       }

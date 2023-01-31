@@ -63,6 +63,10 @@
               "resample": {
                 "type": "boolean",
                 "optional": true
+              },
+              "newalgorithm": {
+                "type": "boolean",
+                "optional": true
               }
             },
             "optional": true

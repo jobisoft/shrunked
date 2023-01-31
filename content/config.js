@@ -29,6 +29,7 @@ async function getAll() {
     "options.orientation": true,
     "options.gps": true,
     "options.resample": true,
+    "options.newalgorithm":true,
     resizeAttachmentsOnSend: false,
   });
 
@@ -60,6 +61,7 @@ async function getAll() {
   }
   s_quality.value = prefs["default.quality"];
   cb_resample.checked = prefs["options.resample"];
+  cb_newalgorithm.checked = prefs["options.newalgorithm"];
   cb_exif.checked = prefs["options.exif"];
   cb_orient.checked = prefs["options.orientation"];
   cb_gps.checked = prefs["options.gps"];
@@ -67,6 +69,7 @@ async function getAll() {
   s_resizeonsend.value = prefs.resizeAttachmentsOnSend;
 
   l_width.disabled = tb_width.disabled = l_height.disabled = tb_height.disabled = !r_custom.checked;
+  cb_newalgorithm.disabled = !cb_resample.checked;
   cb_orient.disabled = cb_gps.disabled = !cb_exif.checked;
 }
 
@@ -86,8 +89,11 @@ addEventListener("load", async () => {
   tb_width.addEventListener("change", setSize);
 
   s_quality.addEventListener("change", setQuality);
-
-  cb_resample.addEventListener("change", setCheckbox);
+  cb_resample.addEventListener("change", event => {
+    cb_newalgorithm.disabled = !cb_resample.checked;
+    setCheckbox(event);
+  });
+  cb_newalgorithm.addEventListener("change", setCheckbox);
   cb_exif.addEventListener("change", event => {
     cb_orient.disabled = cb_gps.disabled = !cb_exif.checked;
     setCheckbox(event);

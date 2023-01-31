@@ -232,6 +232,7 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
             "options.orientation": true,
             "options.gps": true,
             "options.resample": true,
+            "options.newalgorithm":true,
             resizeAttachmentsOnSend: false,
           };
 
@@ -314,6 +315,7 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
         },
         async resizeFile(file, maxWidth, maxHeight, quality, options) {
           const { ShrunkedImage } = ChromeUtils.import("resource://shrunked/ShrunkedImage.jsm");
+          
           return new ShrunkedImage(file, maxWidth, maxHeight, quality, options).resize();
         },
         async estimateSize(file, maxWidth, maxHeight, quality) {

@@ -1,5 +1,10 @@
 # Changelog
 
+## v5.3
+
+- Added different resampling algorithm - https://github.com/taisel/JS-Image-Resizer
+  In some cases it gives better results than the previous one, usually the images look very similar. However, JS-Image-Resizer supports alpha channel, so it works out-of-the-box for transparent PNGs - this feature was missing in v5.2. Previous algorithm is still available and selectable in options.
+
 ## v5.2
 
 - Fixed a bug, where the extension settings were ignored and resampling was in fact turned off for all images. This is the main cause of images looking bad after resize.

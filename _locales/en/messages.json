@@ -17,6 +17,9 @@
   "advanced.resample.label": {
     "message": "Resample images using javascript"
   },
+  "advanced.newalgorithm.label": {
+    "message": "Use different resampling algorithm (preserves PNG transparency)"
+  },
   "advanced.resizeonsend.false": {
     "message": "when attached"
   },
