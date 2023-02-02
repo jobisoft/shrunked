@@ -4,9 +4,11 @@ let config = {
   characterData: false,
   subtree: true,
 };
+let logenabled=false;
 let observer = new MutationObserver(function(mutations) {
   for (let mutation of mutations) {
     if (mutation.addedNodes && mutation.addedNodes.length) {
+      if(logenabled)
       console.log("Nodes added to message: " + mutation.addedNodes.length);
       for (let target of mutation.addedNodes) {
         maybeResizeInline(target);
@@ -15,27 +17,37 @@ let observer = new MutationObserver(function(mutations) {
   }
 });
 observer.observe(document.body, config);
+browser.storage.local.get({
+  "options.logenabled": false,
+}).then((response) =>
+{
+  logenabled = logenabled["options.logenabled"];
+});
 
 async function maybeResizeInline(target) {
   if (target.nodeName == "IMG") {
     try {
-      console.log(
+      if (logenabled)
+        console.log(
         "<IMG> found, source is " +
           target.src.substring(0, 100) +
           (target.src.length <= 100 ? "" : "\u2026")
-      );
+        );
       let parent = target.parentNode;
       while (parent && "classList" in parent) {
         if (parent.classList.contains("moz-signature")) {
-          console.log("Not resizing - image is part of signature");
+          if (logenabled)
+            console.log("Not resizing - image is part of signature");
           return;
         }
         if (parent.getAttribute("type") == "cite") {
-          console.log("Not resizing - image is part of message being replied to");
+          if (logenabled)
+            console.log("Not resizing - image is part of message being replied to");
           return;
         }
         if (parent.classList.contains("moz-forward-container")) {
-          console.log("Not resizing - image is part of forwarded message");
+          if (logenabled)
+            console.log("Not resizing - image is part of forwarded message");
           return;
         }
         parent = parent.parentNode;
@@ -45,25 +57,30 @@ async function maybeResizeInline(target) {
         target.addEventListener(
           "load",
           () => {
-            console.log("Image now loaded, calling maybeResizeInline");
+            if (logenabled)
+              console.log("Image now loaded, calling maybeResizeInline");
             maybeResizeInline(target);
           },
           { once: true }
         );
-        console.log("Image not yet loaded");
+        if (logenabled)
+          console.log("Image not yet loaded");
         return;
       }
 
       if (target.hasAttribute("shrunked:resized")) {
-        console.log("Not resizing - image already has shrunked attribute");
+        if (logenabled)
+          console.log("Not resizing - image already has shrunked attribute");
         return;
       }
       if (!imageIsAccepted(target)) {
-        console.log("Not resizing - image is not JPEG / PNG");
+        if (logenabled)
+          console.log("Not resizing - image is not JPEG / PNG");
         return;
       }
       if (target.width < 500 && target.height < 500) {
-        console.log("Not resizing - image is too small");
+        if (logenabled)
+          console.log("Not resizing - image is too small");
         return;
       }
 
@@ -80,7 +97,8 @@ async function maybeResizeInline(target) {
           fileSizeMinimum: 100,
         });
         if (srcSize < fileSizeMinimum * 1024) {
-          console.log("Not resizing - image file size is too small");
+          if (logenabled)
+            console.log("Not resizing - image file size is too small");
           return;
         }
       }
@@ -122,7 +140,8 @@ async function maybeResizeInline(target) {
       console.error(ex);
     }
   } else if (target.nodeType == Node.ELEMENT_NODE) {
-    console.log("<" + target.nodeName + "> found, checking children");
+    if (logenabled)
+      console.log("<" + target.nodeName + "> found, checking children");
     for (let child of target.children) {
       maybeResizeInline(child);
     }

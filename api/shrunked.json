@@ -9,6 +9,17 @@
         "parameters": []
       },
       {
+        "name": "setDebug",
+        "type": "function",
+        "async": true,
+        "parameters": [
+          {
+            "name": "isEnabled",
+            "type": "boolean"
+          }
+        ]
+      },
+      {
         "name": "showNotification",
         "type": "function",
         "async": true,
@@ -67,6 +78,10 @@
               "newalgorithm": {
                 "type": "boolean",
                 "optional": true
+              },
+              "logenabled":{
+                "type":"boolean",
+                "optional":true
               }
             },
             "optional": true

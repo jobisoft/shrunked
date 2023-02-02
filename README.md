@@ -23,5 +23,8 @@ It is used by default, to use the previous algorithm please uncheck the correspo
     Difference in resizing jpg from https://www.vecteezy.com/vector-art/1957829-tech-background-with-abstract-wave-lines (4900x1960px) to 500px width
 
     ![jpg preview](/images/preview_jpg.jpg)
+- If the selected file cannot be resized, the context menu item is disabled and shows additional information instead of item being hidden.
+- Console logging can be disabled.
+
 ## Known issues
 

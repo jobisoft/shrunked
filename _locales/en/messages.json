@@ -47,6 +47,12 @@
   "context.single": {
     "message": "Resize this image…"
   },
+  "context.unsupportedFile": {
+    "message": "Resize disabled: unsupported file format"
+  },
+  "context.tooSmall": {
+    "message": "Resize disabled: file too small (<500px)"
+  },
   "custom.label": {
     "message": "Custom"
   },

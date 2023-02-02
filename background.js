@@ -11,7 +11,14 @@ async function shouldResize(attachment, checkSize = true) {
   let file = await browser.compose.getAttachmentFile(attachment.id);
   return file.size >= fileSizeMinimum * 1024;
 }
-
+//check options on start and forward the logenabled setting to shrunked api
+loadOptions().then((response)=>
+{
+  let logenabled=response.logenabled;
+  if(logenabled)
+    console.info("Shrunked Extension: Debug is enabled");
+  browser.shrunked.setDebug(logenabled);
+});
 browser.shrunked.migrateSettings().then(prefsToStore => {
   if (prefsToStore) {
     browser.storage.local.set(prefsToStore);
@@ -187,22 +194,7 @@ async function doResize(tabId, maxWidth, maxHeight, quality) {
     return;
   }
 
-  let options = await browser.storage.local.get({
-     "options.exif": true,
-     "options.orientation": true,
-     "options.gps": true,
-     "options.resample": true,
-     "options.newalgorithm":true,
-   });
-   
-   options = {
-     exif: options['options.exif'],
-     orientation: options['options.orientation'],
-     gps: options['options.gps'],
-     resample: options['options.resample'],
-     newalgorithm: options['options.newalgorithm'],
-  };
-
+  let options=await loadOptions();
   for (let source of sourceFiles) {
     let destFile = await browser.shrunked.resizeFile(
       source.file,
@@ -214,7 +206,37 @@ async function doResize(tabId, maxWidth, maxHeight, quality) {
     source.promise.resolve(destFile);
   }
 }
-
+async function loadOptions(selectedOption=null)
+{
+  let options;
+  if(selectedOption!==null)
+  {
+    options = await browser.storage.local.get({
+      "options.logenabled": false,
+    });
+    options=options[selectedOption];
+  }
+  else
+  {
+    options = await browser.storage.local.get({
+      "options.exif": true,
+      "options.orientation": true,
+      "options.gps": true,
+      "options.resample": true,
+      "options.newalgorithm": true,
+      "options.logenabled":false,
+    });
+    options = {
+      exif: options['options.exif'],
+      orientation: options['options.orientation'],
+      gps: options['options.gps'],
+      resample: options['options.resample'],
+      newalgorithm: options['options.newalgorithm'],
+      logenabled: options["options.logenabled"]
+    };
+  }
+  return options;
+}
 function cancelResize(tabId) {
   if (!tabMap.has(tabId)) {
     return;
