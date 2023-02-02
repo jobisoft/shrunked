@@ -30,6 +30,7 @@ async function getAll() {
     "options.gps": true,
     "options.resample": true,
     "options.newalgorithm":true,
+    "options.logenabled":false,
     resizeAttachmentsOnSend: false,
   });
 
@@ -65,6 +66,7 @@ async function getAll() {
   cb_exif.checked = prefs["options.exif"];
   cb_orient.checked = prefs["options.orientation"];
   cb_gps.checked = prefs["options.gps"];
+  cb_logenabled.checked=prefs["options.logenabled"]
   // cb_logenabled.checked = prefs["log.enabled"];
   s_resizeonsend.value = prefs.resizeAttachmentsOnSend;
 
@@ -103,7 +105,7 @@ addEventListener("load", async () => {
   // cb_logenabled.addEventListener("change", setCheckbox);
 
   s_resizeonsend.addEventListener("change", setSendOption);
-
+  cb_logenabled.addEventListener("change", setCheckbox);
   browser.storage.onChanged.addListener(() => {
     if (!settingFromThisPage) {
       getAll();

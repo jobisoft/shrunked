@@ -3,6 +3,7 @@ Cu.importGlobalProperties(["fetch", "File", "FileReader"]);
 
 const { ExtensionCommon } = ChromeUtils.import("resource://gre/modules/ExtensionCommon.jsm");
 const { ExtensionSupport } = ChromeUtils.import("resource:///modules/ExtensionSupport.jsm");
+
 const {
   ExtensionUtils: { ExtensionError },
 } = ChromeUtils.import("resource://gre/modules/ExtensionUtils.jsm");
@@ -13,7 +14,7 @@ const resProto = Cc["@mozilla.org/network/protocol;1?name=resource"].getService(
 );
 
 let ready = false;
-
+let logenabled = false;
 var shrunked = class extends ExtensionCommon.ExtensionAPI {
   getAPI(context) {
     let { extension } = context;
@@ -48,27 +49,32 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
           composeMenuItem.id = "shrunked-content-context-item";
           composeMenuItem.label = localeData.localizeMessage("context.single");
 
-          composeContext.addEventListener("popupshowing", function() {
+          composeContext.addEventListener("popupshowing", function () {
             let editor = window.GetCurrentEditorElement();
             let target = editor.contentDocument.elementFromPoint(
               editor._contextX,
               editor._contextY
             );
-            let shouldShow = false;
+            let isDisabled = true;
             if (target.nodeName == "IMG") {
-              console.log("Context menu on an <IMG>");
+              if (logenabled)
+                console.log("Context menu on an <IMG>");
               if (imageIsAccepted(target.src)) {
                 if (target.width > 500 || target.height > 500) {
-                  shouldShow = true;
+                  isDisabled = false;
                 } else {
-                  console.log("Not resizing - image is too small");
+                  if (logenabled)
+                    console.log("Not resizing - image is too small");
+                  composeMenuItem.label = localeData.localizeMessage("context.tooSmall");
                 }
               } else {
-                console.log("Not resizing - image is not JPEG / PNG");
+                if (logenabled)
+                  console.log("Not resizing - image is not JPEG / PNG");
+                composeMenuItem.label = localeData.localizeMessage("context.unsupportedFile");
               }
             }
-
-            composeSeparator.hidden = composeMenuItem.hidden = !shouldShow;
+            composeMenuItem.disabled=true;
+            
           });
 
           composeMenuItem.addEventListener("command", async () => {
@@ -88,14 +94,15 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
 
             let result = await extension.emit("shrunked-compose-context", window, srcFile);
             if (!result || !Array.isArray(result) || !(result[0] instanceof File)) {
-              console.log("Unexpected return:", result);
+              if (logenabled)
+                console.log("Unexpected return:", result);
               return;
             }
             let [destFile] = result;
 
             let destURL = await new Promise(resolve => {
               let reader = new FileReader();
-              reader.onloadend = function() {
+              reader.onloadend = function () {
                 let dataURL = reader.result;
                 let headerIndexEnd = dataURL.indexOf(";");
                 dataURL = reader.result.substring(0, headerIndexEnd) + ";filename=" + encodeURIComponent(destFile.name) + dataURL.substring(headerIndexEnd);
@@ -117,8 +124,9 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
           );
           attachmentMenuItem.id = "shrunked-attachment-context-item";
 
-          attachmentContext.addEventListener("popupshowing", function() {
-            console.log("Context menu on attachments");
+          attachmentContext.addEventListener("popupshowing", function () {
+            if (logenabled)
+              console.log("Context menu on attachments");
             indicies.length = 0;
             let items = window.document.getElementById("attachmentBucket").itemChildren;
             for (let i = 0; i < items.length; i++) {
@@ -133,14 +141,17 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
                 indicies.push(i);
               }
             }
-            attachmentMenuItem.hidden = !indicies.length;
+            attachmentMenuItem.disabled = !indicies.length;
+
             if (!indicies.length) {
-              console.log("Not resizing - no attachments were JPEG/PNG and large enough");
+              if (logenabled)
+                console.log("Not resizing - no attachments were JPEG/PNG and large enough");
+              attachmentMenuItem.label = localeData.localizeMessage("context.unsupportedFile");
             } else if (indicies.length == 1) {
               attachmentMenuItem.label = localeData.localizeMessage("context.single");
             } else {
               attachmentMenuItem.label = localeData.localizeMessage("context.plural");
-            }
+            } 
           });
 
           attachmentMenuItem.addEventListener("command", () => {
@@ -163,7 +174,7 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
             }
 
             extension.on("shrunked-accepted", callback);
-            return function() {
+            return function () {
               extension.off("shrunked-accepted", callback);
             };
           },
@@ -177,7 +188,7 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
             }
 
             extension.on("shrunked-cancelled", callback);
-            return function() {
+            return function () {
               extension.off("shrunked-cancelled", callback);
             };
           },
@@ -192,7 +203,7 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
             }
 
             extension.on("shrunked-compose-context", callback);
-            return function() {
+            return function () {
               extension.off("shrunked-compose-context", callback);
             };
           },
@@ -207,12 +218,17 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
             }
 
             extension.on("shrunked-attachment-context", callback);
-            return function() {
+            return function () {
               extension.off("shrunked-attachment-context", callback);
             };
           },
         }).api(),
-
+        //I could not find any way of direct accessing storage.local from here. The 'recommended' way from topicbox is to use message send, but since i only need one boolean this should be enough.
+        setDebug(isEnabled) {
+          let branch = Services.prefs.getBranch("extensions.shrunked.");
+          branch.setBoolPref("logenabled", isEnabled);
+          logenabled=isEnabled;
+        },
         migrateSettings() {
           let prefsToStore = { version: extension.version };
           let branch = Services.prefs.getBranch("extensions.shrunked.");
@@ -232,7 +248,8 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
             "options.orientation": true,
             "options.gps": true,
             "options.resample": true,
-            "options.newalgorithm":true,
+            "options.newalgorithm": true,
+            "options.logenabled": false,
             resizeAttachmentsOnSend: false,
           };
 
@@ -267,55 +284,59 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
             let notifyBox =
               nativeTab.gComposeNotification || nativeTab.gNotification.notificationbox;
             let notification = notifyBox.getNotificationWithValue("shrunked-notification");
-            if (imageCount == 0) {
-              if (notification) {
-                console.log("Removing resize notification");
-                notifyBox.removeNotification(notification);
+                          if (imageCount == 0) {
+                if (notification) {
+                  if (logenabled)
+                    console.log("Removing resize notification");
+                  notifyBox.removeNotification(notification);
+                }
+                return;
               }
-              return;
-            }
-            if (notification) {
-              console.log("Resize notification already visible");
-              notification._promises.push({ resolve, reject });
-              notification.label = question;
-              return;
-            }
+              if (notification) {
+                if (logenabled)
+                  console.log("Resize notification already visible");
+                notification._promises.push({ resolve, reject });
+                notification.label = question;
+                return;
+              }
+              if (logenabled)
+                console.log("Showing resize notification");
 
-            console.log("Showing resize notification");
-
-            let buttons = [
-              {
-                accessKey: localeData.localizeMessage("yes.accesskey"),
-                callback: () => {
-                  console.log("Resizing started");
-                  extension.emit("shrunked-accepted", tab);
+              let buttons = [
+                {
+                  accessKey: localeData.localizeMessage("yes.accesskey"),
+                  callback: () => {
+                    if (logenabled)
+                      console.log("Resizing started");
+                    extension.emit("shrunked-accepted", tab);
+                  },
+                  label: localeData.localizeMessage("yes.label"),
                 },
-                label: localeData.localizeMessage("yes.label"),
-              },
-              {
-                accessKey: localeData.localizeMessage("no.accesskey"),
-                callback() {
-                  console.log("Resizing cancelled");
-                  extension.emit("shrunked-cancelled", tab);
+                {
+                  accessKey: localeData.localizeMessage("no.accesskey"),
+                  callback() {
+                    if (logenabled)
+                      console.log("Resizing cancelled");
+                    extension.emit("shrunked-cancelled", tab);
+                  },
+                  label: localeData.localizeMessage("no.label"),
                 },
-                label: localeData.localizeMessage("no.label"),
-              },
-            ];
+              ];
 
-            notification = notifyBox.appendNotification(
-              "shrunked-notification",
-              {
-                label: question,
-                priority: notifyBox.PRIORITY_INFO_HIGH,
-              },
-              buttons
-            );
-            notification._promises = [{ resolve, reject }];
+              notification = notifyBox.appendNotification(
+                "shrunked-notification",
+                {
+                  label: question,
+                  priority: notifyBox.PRIORITY_INFO_HIGH,
+                },
+                buttons
+              );
+              notification._promises = [{ resolve, reject }];
           });
         },
         async resizeFile(file, maxWidth, maxHeight, quality, options) {
           const { ShrunkedImage } = ChromeUtils.import("resource://shrunked/ShrunkedImage.jsm");
-          
+
           return new ShrunkedImage(file, maxWidth, maxHeight, quality, options).resize();
         },
         async estimateSize(file, maxWidth, maxHeight, quality) {

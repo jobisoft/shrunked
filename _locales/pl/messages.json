@@ -47,6 +47,12 @@
   "context.single": {
     "message": "Zmień rozmiar tego obrazu…"
   },
+  "context.unsupportedFile": {
+    "message": "Zmiana rozmiaru niemożliwa: nieobsługiwany format"
+  },
+  "context.tooSmall": {
+    "message": "Zmiana rozmiaru niemożliwa: plik zbyt mały (<500px)"
+  },
   "custom.label": {
     "message": "Niestandardowy"
   },

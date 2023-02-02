@@ -19,6 +19,7 @@ function ShrunkedImage(source, maxWidth, maxHeight, quality, options) {
     gps: true,
     resample: true,
     newalgorithm:true,
+    logenabled:false,
     ...options,
   };
 
@@ -94,7 +95,8 @@ ShrunkedImage.prototype = {
       this.exifData = new ExifData();
       await this.exifData.read(readable);
     } catch (ex) {
-      console.warn(ex);
+      if (this.options.logenabled)
+        console.warn(ex);
       delete this.exifData;
     }
   },

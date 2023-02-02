@@ -1,5 +1,10 @@
 # Changelog
 
+## v5.4
+
+- Added config option to stop logging messages to console. This required the shrunked.js to have access to webextension's storage.local, which is not available via services or extension context. I've decided to add new api that sets debug to on or off and set the value that way. Probably not the cleanest way to do it, but it works.
+- The context menu item is no longer hidden for smaller files (inline images) and unsupported file formats. It is now disabled if the image is too small or of the wrong format and the menu item shows why it cannot be resized. I think this was confusing if someone added, say, a bmp file and tried to resize it, but when opening the context menu there was no resize option available and no additional information.
+
 ## v5.3
 
 - Added different resampling algorithm - https://github.com/taisel/JS-Image-Resizer
