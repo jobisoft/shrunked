@@ -1,4 +1,8 @@
-# Changelog
+# Changelog  
+
+## v5.5
+
+- Added BMP support (inline and as attachment) - bmp files are converted to jpeg when resizing.
 
 ## v5.4
 

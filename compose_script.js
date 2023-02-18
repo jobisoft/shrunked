@@ -75,7 +75,7 @@ async function maybeResizeInline(target) {
       }
       if (!imageIsAccepted(target)) {
         if (logenabled)
-          console.log("Not resizing - image is not JPEG / PNG");
+          console.log("Not resizing - image is not JPEG / PNG / BMP");
         return;
       }
       if (target.width < 500 && target.height < 500) {
@@ -126,7 +126,7 @@ async function maybeResizeInline(target) {
           let dataURL = reader.result;
           let headerIndexEnd = dataURL.indexOf(";");
           dataURL =
-            reader.result.substring(0, headerIndexEnd) + ";filename=" + encodeURIComponent(destFile.name) + dataURL.substring(headerIndexEnd);
+            reader.result.substring(0, headerIndexEnd) + ";filename=" + encodeURIComponent(changeExtensionIfNeeded(destFile.name)) + dataURL.substring(headerIndexEnd);
           resolve(dataURL);
         };
         reader.readAsDataURL(destFile);
@@ -147,10 +147,21 @@ async function maybeResizeInline(target) {
     }
   }
 }
-
+function changeExtensionIfNeeded(filename){
+  let src=filename.toLowerCase();
+  //if it is a bmp we will save it as jpeg
+  if (src.startsWith("data:image/bmp")  || src.endsWith(".bmp"))
+  {
+    return src.replace("bmp","jpg");
+  }
+  else
+    return src;
+  
+}
 function imageIsAccepted(image) {
   let src = image.src.toLowerCase();
   let isJPEG = src.startsWith("data:image/jpeg") || src.endsWith(".jpg") || src.endsWith(".jpeg");
   let isPNG = src.startsWith("data:image/png") || src.endsWith(".png");
-  return isJPEG | isPNG;
+  let isBMP = src.startsWith("data:image/bmp") || src.endsWith(".bmp");
+  return isJPEG | isPNG | isBMP;
 }
