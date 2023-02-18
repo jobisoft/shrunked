@@ -132,7 +132,7 @@ async function loadImage(index) {
   }
 
   i_previewthumb.src = images[index].url;
-  l_previewfilename.textContent = images[index].file.name;
+  l_previewfilename.textContent = changeExtensionIfNeeded(images[index].file.name);
   l_previeworiginalfilesize.textContent = browser.i18n.getMessage("preview.originalfilesize", [
     humanSize(images[index].file.size),
   ]);
@@ -220,3 +220,13 @@ b_cancel.addEventListener("click", async () => {
   let thisWindow = await browser.windows.getCurrent();
   browser.windows.remove(thisWindow.id);
 });
+function changeExtensionIfNeeded(filename) {
+  let src = filename.toLowerCase();
+  //if it is a bmp we will save it as jpeg
+  if (src.startsWith("data:image/bmp") || src.endsWith(".bmp")) {
+    return src.replace("bmp", "jpg");
+  }
+  else
+    return src;
+
+}

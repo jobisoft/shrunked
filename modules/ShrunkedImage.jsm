@@ -41,7 +41,7 @@ function ShrunkedImage(source, maxWidth, maxHeight, quality, options) {
       if (match) {
         this.basename = match[1];
       } else {
-        match =/\/([\w.-]+\.(jpe?g|png))$/i.exec(this.sourceURI.spec);
+        match =/\/([\w.-]+\.(jpe?g|png|bmp))$/i.exec(this.sourceURI.spec);
         if (match) {
           this.basename = match[1];
         }

@@ -5,11 +5,12 @@ Since the original repo is no longer mantained and became read-only on 28th of D
 
 ## About this extension
 
-After installing each time a compatible (JPG/PNG) image is attached to/inserted into new e-mail the user has the ability to resize the image. The resized image replaces previously inserted / attached one.  
+Each time a compatible (JPG/PNG/BMP) image is attached to/inserted into new e-mail the user has the ability to resize the image. The resized image replaces previously inserted / attached one.  
 
 ## New in this fork (vs darkrojan's version):
 
 - Added PL lang support,
+- BMP support (converted to JPG when resized),
 - PNG support,
 - "Automatically rotate images" can now be checked - there was an issue with parameter name which caused the option to be permanently disabled,
 - Resampling finally works  

@@ -1,7 +1,7 @@
 var tabMap = new Map();
 
 async function shouldResize(attachment, checkSize = true) {
-  if (!attachment.name.toLowerCase().match(/((\.jpe?g)|(\.png))$/)) {
+  if (!attachment.name.toLowerCase().match(/((\.jpe?g)|(\.png)|(\.bmp))$/)) {
     return false;
   }
   if (!checkSize) {
@@ -68,6 +68,7 @@ browser.compose.onAttachmentAdded.addListener(async (tab, attachment) => {
   }
   await browser.compose.updateAttachment(tab.id, attachment.id, {
     file: destFile,
+    name: changeExtensionIfNeeded(destFile.name)
   });
 });
 
@@ -96,7 +97,7 @@ browser.shrunked.onAttachmentContextClicked.addListener(async (tab, indicies) =>
         if (destFile === null) {
           return;
         }
-        browser.compose.updateAttachment(tab.id, a.id, { file: destFile });
+        browser.compose.updateAttachment(tab.id, a.id, { file: destFile, name: changeExtensionIfNeeded(destFile.name) });
       });
     }
   }
@@ -124,7 +125,7 @@ browser.compose.onBeforeSend.addListener(async (tab, details) => {
         if (destFile === null) {
           return;
         }
-        await browser.compose.updateAttachment(tab.id, a.id, { file: destFile });
+        await browser.compose.updateAttachment(tab.id, a.id, { file: destFile, name: changeExtensionIfNeeded(destFile.name) });
       });
       promises.push(promise);
     }
@@ -252,3 +253,13 @@ function cancelResize(tabId) {
 browser.tabs.onRemoved.addListener(tabId => {
   tabMap.delete(tabId);
 });
+function changeExtensionIfNeeded(filename) {
+  let src = filename.toLowerCase();
+  //if it is a bmp we will save it as jpeg
+  if (src.startsWith("data:image/bmp") || src.endsWith(".bmp")) {
+    return src.replace("bmp", "jpg");
+  }
+  else
+    return src;
+
+}
