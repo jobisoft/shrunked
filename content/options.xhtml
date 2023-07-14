@@ -27,7 +27,19 @@
             <label id="l_measure" data-l10n-content="custom.pixels"></label>
           </label>
         </div>
+        <label data-l10n-content="defaults.quality.label" />
+        <div class="hbox indent">
+          <label data-l10n-content="defaults.quality.smaller" />
+          <input
+            id="s_quality"
+            type="range"
+            min="30"
+            max="100"
+            step="5" />
+          <label data-l10n-content="defaults.quality.better" />
+        </div>
       </div>
+      
       <h1 id="l_previewheader" data-l10n-content="preview.label"></h1>
       <div id="b_previewbox" class="hbox">
         <div id="b_previewarrows" class="vbox">
