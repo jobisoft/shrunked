@@ -11,7 +11,7 @@ var count = parseInt(params.get("count"), 10);
 
 var images = [];
 var currentIndex = 0;
-var maxWidth, maxHeight;
+var maxWidth, maxHeight,quality;
 
 for (let element of document.querySelectorAll("[id]")) {
   window[element.id] = element;
@@ -34,12 +34,14 @@ addEventListener("load", async () => {
   let prefs = await browser.storage.local.get({
     "default.maxWidth": 500,
     "default.maxHeight": 500,
+    "default.quality": 75,
     "default.saveDefault": true,
   });
 
   maxWidth = prefs["default.maxWidth"];
   maxHeight = prefs["default.maxHeight"];
-
+  quality =  prefs["default.quality"];
+  
   if (maxWidth == -1 && maxHeight == -1) {
     r_noresize.checked = true;
   } else if (maxWidth == 500 && maxHeight == 500) {
@@ -133,6 +135,10 @@ async function loadImage(index) {
 
   i_previewthumb.src = images[index].url;
   l_previewfilename.textContent = changeExtensionIfNeeded(images[index].file.name);
+  if(images[index].file.name.startsWith("data:image/png") || images[index].file.name.endsWith(".png"))
+    s_quality.disabled=true;
+  else
+    s_quality.disabled=false;
   l_previeworiginalfilesize.textContent = browser.i18n.getMessage("preview.originalfilesize", [
     humanSize(images[index].file.size),
   ]);
@@ -159,9 +165,7 @@ async function updateEstimate() {
   } else {
     let newWidth = Math.floor(i_previewthumb.naturalWidth * scale + 0.01);
     let newHeight = Math.floor(i_previewthumb.naturalHeight * scale + 0.01);
-    let { "default.quality": quality } = await browser.storage.local.get({
-      "default.quality": 75,
-    });
+
     let cacheKey = `${newWidth}x${newHeight}x${quality}`;
 
     let estimate;
@@ -191,19 +195,20 @@ async function updateEstimate() {
 
 b_previous.addEventListener("click", () => loadImage(currentIndex - 1));
 b_next.addEventListener("click", () => loadImage(currentIndex + 1));
-
+s_quality.addEventListener("change", async () => {
+  quality= parseInt(s_quality.value, 10);
+  updateEstimate();
+});
 b_ok.addEventListener("click", async () => {
   let prefsToStore = {};
   if (cb_savedefault.checked) {
     prefsToStore["default.maxWidth"] = maxWidth;
     prefsToStore["default.maxHeight"] = maxHeight;
+    prefsToStore["default.quality"] = quality;
   }
   prefsToStore["default.saveDefault"] = cb_savedefault.checked;
   await browser.storage.local.set(prefsToStore);
 
-  let { "default.quality": quality } = await browser.storage.local.get({
-    "default.quality": 75,
-  });
   await browser.runtime.sendMessage({
     type: "doResize",
     tabId,
@@ -220,13 +225,3 @@ b_cancel.addEventListener("click", async () => {
   let thisWindow = await browser.windows.getCurrent();
   browser.windows.remove(thisWindow.id);
 });
-function changeExtensionIfNeeded(filename) {
-  let src = filename.toLowerCase();
-  //if it is a bmp we will save it as jpeg
-  if (src.startsWith("data:image/bmp") || src.endsWith(".bmp")) {
-    return src.replace("bmp", "jpg");
-  }
-  else
-    return src;
-
-}
