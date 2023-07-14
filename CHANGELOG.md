@@ -1,4 +1,7 @@
 # Changelog  
+## v5.5a
+
+- Removed strict_max_version from manifest, checked briefly with Thunderbird v115.0 and it seems to be working fine
 
 ## v5.5
 
