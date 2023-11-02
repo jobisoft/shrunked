@@ -1,4 +1,16 @@
 # Changelog  
+
+
+## v5.61
+
+- Fixed wrong version in manifest (#10)
+- Fixed some errors being thrown to console (including #11) - added catch to promises and included checking of logging enabled
+- Fixed inline image context menu being disabled all the time
+
+## v5.6
+
+- Added quality slider to options window (#8)
+
 ## v5.5a
 
 - Removed strict_max_version from manifest, checked briefly with Thunderbird v115.0 and it seems to be working fine

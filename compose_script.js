@@ -137,7 +137,8 @@ async function maybeResizeInline(target) {
       target.removeAttribute("height");
       target.setAttribute("shrunked:resized", "true");
     } catch (ex) {
-      console.error(ex);
+      if (logenabled)
+        console.error(ex);
     }
   } else if (target.nodeType == Node.ELEMENT_NODE) {
     if (logenabled)

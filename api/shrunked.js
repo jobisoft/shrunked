@@ -73,7 +73,7 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
                 composeMenuItem.label = localeData.localizeMessage("context.unsupportedFile");
               }
             }
-            composeMenuItem.disabled=true;
+            composeMenuItem.disabled=isDisabled;
             
           });
 
@@ -375,7 +375,6 @@ function changeExtensionIfNeeded(filename) {
   }
   else
     return src;
-
 }
 function imageIsAccepted(url) {
   let src = url.toLowerCase();

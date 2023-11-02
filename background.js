@@ -1,5 +1,5 @@
 var tabMap = new Map();
-
+let logenabled=true;
 async function shouldResize(attachment, checkSize = true) {
   if (!attachment.name.toLowerCase().match(/((\.jpe?g)|(\.png)|(\.bmp))$/)) {
     return false;
@@ -14,7 +14,7 @@ async function shouldResize(attachment, checkSize = true) {
 //check options on start and forward the logenabled setting to shrunked api
 loadOptions().then((response)=>
 {
-  let logenabled=response.logenabled;
+  logenabled=response.logenabled;
   if(logenabled)
     console.info("Shrunked Extension: Debug is enabled");
   browser.shrunked.setDebug(logenabled);
@@ -63,9 +63,10 @@ browser.compose.onAttachmentAdded.addListener(async (tab, attachment) => {
 
   let file = await browser.compose.getAttachmentFile(attachment.id);
   let destFile = await beginResize(tab, file);
-  if (destFile === null) {
+  if (destFile === null || destFile === undefined) {
     return;
   }
+  
   await browser.compose.updateAttachment(tab.id, attachment.id, {
     file: destFile,
     name: changeExtensionIfNeeded(destFile.name)
@@ -76,7 +77,10 @@ browser.compose.onAttachmentAdded.addListener(async (tab, attachment) => {
 browser.shrunked.onComposeContextClicked.addListener(async (tab, file) => {
   tabMap.delete(tab.id);
   return new Promise((resolve, reject) => {
-    beginResize(tab, file, false).then(resolve, reject);
+    beginResize(tab, file, false).then(resolve, reject).catch(error => {
+      if(logenabled)
+        console.error('onComposeContextClicked', error);
+    });
     showOptionsDialog(tab);
   });
 });
@@ -98,7 +102,10 @@ browser.shrunked.onAttachmentContextClicked.addListener(async (tab, indicies) =>
           return;
         }
         browser.compose.updateAttachment(tab.id, a.id, { file: destFile, name: changeExtensionIfNeeded(destFile.name) });
-      });
+      }).catch(error => {
+        if(logenabled)
+          console.error('onAttachmentContextClicked', error);
+      });;
     }
   }
 
@@ -126,6 +133,9 @@ browser.compose.onBeforeSend.addListener(async (tab, details) => {
           return;
         }
         await browser.compose.updateAttachment(tab.id, a.id, { file: destFile, name: changeExtensionIfNeeded(destFile.name) });
+      }).catch(error => {
+        if(logenabled)
+          console.error('onBeforeSend', error);
       });
       promises.push(promise);
     }
@@ -155,6 +165,9 @@ function beginResize(tab, file, notification = true) {
     } else {
       browser.shrunked.showNotification(tab, 0);
     }
+  }).catch(error => {
+    if(logenabled)
+      console.error('beginResize', error);
   });
 }
 

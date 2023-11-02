@@ -225,3 +225,12 @@ b_cancel.addEventListener("click", async () => {
   let thisWindow = await browser.windows.getCurrent();
   browser.windows.remove(thisWindow.id);
 });
+function changeExtensionIfNeeded(filename) {
+  let src = filename.toLowerCase();
+  //if it is a bmp we will save it as jpeg
+  if (src.startsWith("data:image/bmp") || src.endsWith(".bmp")) {
+    return src.replace("bmp", "jpg");
+  }
+  else
+    return src;
+}
