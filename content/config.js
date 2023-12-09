@@ -31,6 +31,8 @@ async function getAll() {
     "options.resample": true,
     "options.newalgorithm":true,
     "options.logenabled":false,
+    "options.contextInfo":false,
+    "options.autoResize":"off",
     resizeAttachmentsOnSend: false,
   });
 
@@ -67,6 +69,8 @@ async function getAll() {
   cb_orient.checked = prefs["options.orientation"];
   cb_gps.checked = prefs["options.gps"];
   cb_logenabled.checked=prefs["options.logenabled"]
+  cb_contextInfoEnabled.checked=prefs["options.contextInfo"]
+  s_autoResize.value=prefs["options.autoResize"]
   // cb_logenabled.checked = prefs["log.enabled"];
   s_resizeonsend.value = prefs.resizeAttachmentsOnSend;
 
@@ -106,6 +110,8 @@ addEventListener("load", async () => {
 
   s_resizeonsend.addEventListener("change", setSendOption);
   cb_logenabled.addEventListener("change", setCheckbox);
+  cb_contextInfoEnabled.addEventListener("change", setCheckbox);
+  s_autoResize.addEventListener("change", setAutoResizeOption);
   browser.storage.onChanged.addListener(() => {
     if (!settingFromThisPage) {
       getAll();
@@ -176,6 +182,13 @@ async function setSendOption() {
   settingFromThisPage = true;
   await browser.storage.local.set({
     resizeAttachmentsOnSend: s_resizeonsend.value == "true",
+  });
+  settingFromThisPage = false;
+}
+async function setAutoResizeOption() {
+  settingFromThisPage = true;
+  await browser.storage.local.set({
+    "options.autoResize": s_autoResize.value,
   });
   settingFromThisPage = false;
 }

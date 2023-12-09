@@ -1,6 +1,12 @@
 # Changelog  
+## v5.7
 
-
+- Added auto resize option for new messages. When enabled, each time an attachment is added / pasted inline, the extension checks if it meets the size restrictions set in the options. If so, the image is automatically resized and saved. (#12)
+- Added an option to hide the extra info displayed in the attachments context menu when the file type is not supported (#13)
+- Disabled Exif check on PNG files as it sometimes led to PNG files being rejected from resize
+- Added 'tabs' to permissions - needed to tidy up the file map and detect the creation of new compose windows
+- Added reloading of settings each time a compose window is opened
+  
 ## v5.61
 
 - Fixed wrong version in manifest (#10)

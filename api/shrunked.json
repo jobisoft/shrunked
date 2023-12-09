@@ -9,12 +9,16 @@
         "parameters": []
       },
       {
-        "name": "setDebug",
+        "name": "setOptions",
         "type": "function",
         "async": true,
         "parameters": [
           {
-            "name": "isEnabled",
+            "name": "isDebugEnabled",
+            "type": "boolean"
+          },
+          {
+            "name": "isContextInfoEnabled",
             "type": "boolean"
           }
         ]
@@ -81,6 +85,14 @@
               },
               "logenabled":{
                 "type":"boolean",
+                "optional":true
+              },
+              "contextInfo":{
+                "type":"boolean",
+                "optional":true
+              },
+              "autoResize":{
+                "type":"string",
                 "optional":true
               }
             },

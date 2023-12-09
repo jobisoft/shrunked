@@ -11,6 +11,24 @@
   "advanced.logenabled.label": {
     "message": "Log messages to Error Console"
   },
+  "advanced.contextInfo.label": {
+    "message": "Show message in context menu for unsupported types"
+  },  
+  "advanced.autoResize.label": {
+    "message": "Auto resize images that meet size criteria"
+  },
+  "advanced.autoResize.off": {
+    "message": "Don't auto resize"
+  },
+  "advanced.autoResize.all": {
+    "message": "Auto resize all images"
+  },
+  "advanced.autoResize.attached": {
+    "message": "Auto resize attached images"
+  },
+  "advanced.autoResize.inline": {
+    "message": "Auto resize inline images"
+  },
   "advanced.orient.label": {
     "message": "Automatically rotate images"
   },

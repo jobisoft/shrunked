@@ -19,6 +19,8 @@ function ShrunkedImage(source, maxWidth, maxHeight, quality, options) {
     gps: true,
     resample: true,
     newalgorithm:true,
+    contextInfo:true,
+    autoResize:false,
     logenabled:false,
     ...options,
   };
@@ -66,7 +68,7 @@ function ShrunkedImage(source, maxWidth, maxHeight, quality, options) {
 ShrunkedImage.prototype = {
   async resize() {
     let orientation = 0;
-    if (this.options.exif) {
+    if (this.options.exif && this.imageFormat=="image/jpeg") {
       await this.readExifData();
       if (this.options.orientation && this.exifData) {
         orientation = this.exifData.orientation;
@@ -91,7 +93,7 @@ ShrunkedImage.prototype = {
       } else {
         readable = await Readable(this.sourceURI.spec);
       }
-
+      
       this.exifData = new ExifData();
       await this.exifData.read(readable);
     } catch (ex) {
