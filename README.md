@@ -9,6 +9,7 @@ Each time a compatible (JPG/PNG/BMP) image is attached to/inserted into new e-ma
 
 ## New in this fork (vs darkrojan's version):
 
+- Added Autoresize (currently works only for newly added attachments / inline images). This can be enabled for all images / inline only / attachments only. When enabled, each time an image is inserted / attached, the requirements for the resize function are checked (file size / dimensions, the ones set in options panel). If the image should be resized, it will be resized and replaced automatically, without any user interaction.
 - Added PL lang support,
 - BMP support (converted to JPG when resized),
 - PNG support,

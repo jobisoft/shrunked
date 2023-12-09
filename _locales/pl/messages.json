@@ -10,6 +10,24 @@
   },
   "advanced.logenabled.label": {
     "message": "Loguj do Konsoli Błedów"
+  },  
+  "advanced.contextInfo.label": {
+    "message": "Pokaż informację w menu kontekstowym o niewspieranym formacie pliku"
+  },
+  "advanced.autoResize.label": {
+    "message": "Automatycznie zmniejszaj obrazki spełniające kryteria"
+  },
+  "advanced.autoResize.off": {
+    "message": "Nie zmniejszaj automatycznie"
+  },
+  "advanced.autoResize.all": {
+    "message": "Automatycznie zmniejszaj wszystkie obrazki"
+  },
+  "advanced.autoResize.attached": {
+    "message": "Automatycznie zmniejszaj tylko załączniki"
+  },
+  "advanced.autoResize.inline": {
+    "message": "Automatycznie zmniejszaj tylko dodane w treści"
   },
   "advanced.orient.label": {
     "message": "Automatycznie obróć obrazki"

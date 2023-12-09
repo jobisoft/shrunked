@@ -11,13 +11,19 @@ async function shouldResize(attachment, checkSize = true) {
   let file = await browser.compose.getAttachmentFile(attachment.id);
   return file.size >= fileSizeMinimum * 1024;
 }
-//check options on start and forward the logenabled setting to shrunked api
+//get options and defaults from config
+let options={}
+let defaults={}
+//check options on start and forward the logenabled/contextinfo setting to shrunked api
 loadOptions().then((response)=>
 {
-  logenabled=response.logenabled;
+  options=response.options;
+  defaults=response.defaults;
+  logenabled=response.options.logenabled;
+  contextInfo=response.options.contextInfo;
   if(logenabled)
     console.info("Shrunked Extension: Debug is enabled");
-  browser.shrunked.setDebug(logenabled);
+  browser.shrunked.setOptions(logenabled,contextInfo);
 });
 browser.shrunked.migrateSettings().then(prefsToStore => {
   if (prefsToStore) {
@@ -35,8 +41,9 @@ browser.composeScripts.register({
 
 browser.runtime.onMessage.addListener(async (message, sender, callback) => {
   // Image added to body of message. Return a promise to the sender.
-  if (message.type == "resizeFile") {
-    return beginResize(sender.tab, message.file);
+  if (message.type == "resizeFile") {  
+    //resizeFile is sent by content script when inline image is inserted. We need to tell the function that this is inline and that the action should trigger auto resize
+    return beginResize(sender.tab, message.file,false,true,true);
   }
   // Options window requesting a file.
   if (message.type == "fetchFile") {
@@ -62,7 +69,8 @@ browser.compose.onAttachmentAdded.addListener(async (tab, attachment) => {
   }
 
   let file = await browser.compose.getAttachmentFile(attachment.id);
-  let destFile = await beginResize(tab, file);
+  //tell beginResize that this is not inline and that this event should trigger auto resize
+  let destFile = await beginResize(tab, file,true,false,true);
   if (destFile === null || destFile === undefined) {
     return;
   }
@@ -153,14 +161,21 @@ browser.compose.onBeforeSend.addListener(async (tab, details) => {
 });
 
 // Get a promise that resolves when resizing is complete.
-function beginResize(tab, file, notification = true) {
+// For auto resize we need to know if the image isInline and if this is an event that should trigger auto resize. This method is called multiple times, not only when adding attachemnt
+function beginResize(tab, file, notification = true,isInline=false,shouldResizeAuto=false) {
   return new Promise((resolve, reject) => {
     if (!tabMap.has(tab.id)) {
       tabMap.set(tab.id, []);
     }
     let sourceFiles = tabMap.get(tab.id);
     sourceFiles.push({ promise: { resolve, reject }, file });
-    if (notification) {
+    //check if autoResize is on and if current event should trigger it (shouldResizeAuto) and also if auto resize is turned on for this type of image (inline/attachment)
+    if(options.autoResize!="off" && shouldResizeAuto && ((options.autoResize=="inline" && isInline) || (options.autoResize=="attached" && !isInline) || options.autoResize=="all"))
+    {
+      doResize(tab.id, defaults.maxWidth,defaults.maxHeight,defaults.quality,file);
+    }
+    //if not proceed with notification
+    else if (notification) {
       browser.shrunked.showNotification(tab, sourceFiles.length);
     } else {
       browser.shrunked.showNotification(tab, 0);
@@ -195,7 +210,9 @@ async function showOptionsDialog(tab) {
 }
 
 // Actual resize operation.
-async function doResize(tabId, maxWidth, maxHeight, quality) {
+// Since doResize usually tries to process all files, we need a special attribute (file) to tell it to process only one file when using auto resize.
+// Without this each time a file is auto resized ALL of the attached files / inline images would be resized.
+async function doResize(tabId, maxWidth, maxHeight, quality,file="") {
   // Remove from tabMap immediately, then cancelResize will have nothing to do.
   let sourceFiles = tabMap.get(tabId);
   tabMap.delete(tabId);
@@ -207,9 +224,10 @@ async function doResize(tabId, maxWidth, maxHeight, quality) {
     }
     return;
   }
-
-  let options=await loadOptions();
+  
   for (let source of sourceFiles) {
+    if(file!="" && source.file!=file)
+    continue;
     let destFile = await browser.shrunked.resizeFile(
       source.file,
       maxWidth,
@@ -227,6 +245,7 @@ async function loadOptions(selectedOption=null)
   {
     options = await browser.storage.local.get({
       "options.logenabled": false,
+      "options.contextInfo": true
     });
     options=options[selectedOption];
   }
@@ -239,17 +258,33 @@ async function loadOptions(selectedOption=null)
       "options.resample": true,
       "options.newalgorithm": true,
       "options.logenabled":false,
+      "options.contextInfo":true,
+      "options.autoResize":"off",
+      "default.maxWidth": 500,
+      "default.maxHeight": 500,
+      "default.quality": 75,
+      "default.saveDefault": true,
     });
+    defaults = {
+      maxWidth: options['default.maxWidth'],
+      maxHeight: options['default.maxHeight'],
+      quality: options['default.quality'],
+      saveDefault: options['default.saveDefault'],
+    }
     options = {
       exif: options['options.exif'],
       orientation: options['options.orientation'],
       gps: options['options.gps'],
       resample: options['options.resample'],
       newalgorithm: options['options.newalgorithm'],
-      logenabled: options["options.logenabled"]
+      logenabled: options["options.logenabled"],
+      contextInfo: options["options.contextInfo"],
+      autoResize:options["options.autoResize"],
     };
+    
   }
-  return options;
+  
+  return {"options":options,"defaults":defaults};
 }
 function cancelResize(tabId) {
   if (!tabMap.has(tabId)) {
@@ -265,6 +300,22 @@ function cancelResize(tabId) {
 // Clean up.
 browser.tabs.onRemoved.addListener(tabId => {
   tabMap.delete(tabId);
+});
+//reload settings each time a new compose window is opened
+browser.tabs.onCreated.addListener(tab => {
+  if(tab.type=="messageCompose")
+  {
+    loadOptions().then((response)=>
+    {
+      options=response.options;
+      defaults=response.defaults;
+      logenabled=response.options.logenabled;
+      contextInfo=response.options.contextInfo;
+      if(logenabled)
+        console.info("Shrunked Extension: Debug is enabled");
+      browser.shrunked.setOptions(logenabled,contextInfo);
+    });   
+  }
 });
 function changeExtensionIfNeeded(filename) {
   let src = filename.toLowerCase();

@@ -15,6 +15,7 @@ const resProto = Cc["@mozilla.org/network/protocol;1?name=resource"].getService(
 
 let ready = false;
 let logenabled = false;
+let contextInfo = true;
 var shrunked = class extends ExtensionCommon.ExtensionAPI {
   getAPI(context) {
     let { extension } = context;
@@ -141,7 +142,18 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
                 indicies.push(i);
               }
             }
-            attachmentMenuItem.disabled = !indicies.length;
+            //check if a message should be displayed when accessing context menu on unsupported images
+            //if yes then set hidden to true, if not set it to disabled.
+            if(contextInfo)
+            {
+              attachmentMenuItem.disabled = !indicies.length;
+              attachmentMenuItem.hidden = false;
+            }
+            else
+            {
+              attachmentMenuItem.disabled = false;
+              attachmentMenuItem.hidden = !indicies.length;
+            }
 
             if (!indicies.length) {
               if (logenabled)
@@ -224,10 +236,12 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
           },
         }).api(),
         //I could not find any way of direct accessing storage.local from here. The 'recommended' way from topicbox is to use message send, but since i only need one boolean this should be enough.
-        setDebug(isEnabled) {
+        setOptions(isDebugEnabled,isContextInfoEnabled) {
           let branch = Services.prefs.getBranch("extensions.shrunked.");
-          branch.setBoolPref("logenabled", isEnabled);
-          logenabled=isEnabled;
+          branch.setBoolPref("logenabled", isDebugEnabled);
+          branch.setBoolPref("contextInfo", isContextInfoEnabled);
+          contextInfo=isContextInfoEnabled;
+          logenabled=isDebugEnabled;
         },
         migrateSettings() {
           let prefsToStore = { version: extension.version };
@@ -250,6 +264,8 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
             "options.resample": true,
             "options.newalgorithm": true,
             "options.logenabled": false,
+            "options.contextInfo": true,
+            "options.autoResize": "off",
             resizeAttachmentsOnSend: false,
           };
 
