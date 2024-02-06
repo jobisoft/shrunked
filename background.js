@@ -43,7 +43,7 @@ browser.runtime.onMessage.addListener(async (message, sender, callback) => {
   // Image added to body of message. Return a promise to the sender.
   if (message.type == "resizeFile") {  
     //resizeFile is sent by content script when inline image is inserted. We need to tell the function that this is inline and that the action should trigger auto resize
-    return beginResize(sender.tab, message.file,false,true,true);
+    return beginResize(sender.tab, message.file,true,true,true);
   }
   // Options window requesting a file.
   if (message.type == "fetchFile") {
