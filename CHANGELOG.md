@@ -1,4 +1,7 @@
 # Changelog  
+## v5.7.1
+- Fixed - Notification not displayed when inserting an inline image (#19)
+
 ## v5.7
 
 - Added auto resize option for new messages. When enabled, each time an attachment is added / pasted inline, the extension checks if it meets the size restrictions set in the options. If so, the image is automatically resized and saved. (#12)
