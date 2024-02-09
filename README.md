@@ -28,5 +28,11 @@ It is used by default, to use the previous algorithm please uncheck the correspo
 - If the selected file cannot be resized, the context menu item is disabled and shows additional information instead of item being hidden.
 - Console logging can be disabled.
 
-## Known issues
+## Installation
+Head over to [release page](https://github.com/memeller/shrunked/releases/latest) and download the xpi. \
+If you are using Firefox you need to right click the link and select "Save link as...", otherwise Firefox will try to install the xpi file in Firefox.\
+Open Thunderbird, open Add-ons (Tools -> Add-ons and Themes), select "Install Add-on From File..."\
+![install from file](/images/install_from_file.png)\
+and select the downloaded xpi.
 
+## Known issues
