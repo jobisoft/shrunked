@@ -63,6 +63,7 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
               if (imageIsAccepted(target.src)) {
                 if (target.width > 500 || target.height > 500) {
                   isDisabled = false;
+                  composeMenuItem.label = localeData.localizeMessage("context.single");
                 } else {
                   if (logenabled)
                     console.log("Not resizing - image is too small");
@@ -94,9 +95,9 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
             let srcFile = new File([srcBlob], srcName);
 
             let result = await extension.emit("shrunked-compose-context", window, srcFile);
-            if (!result || !Array.isArray(result) || !(result[0] instanceof File)) {
+            if (!result || !Array.isArray(result) || (result[0].constructor.name!="File")) {
               if (logenabled)
-                console.log("Unexpected return:", result);
+                console.log("Unexpected return:", result[0]);
               return;
             }
             let [destFile] = result;

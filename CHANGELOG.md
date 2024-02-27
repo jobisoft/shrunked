@@ -1,5 +1,14 @@
 # Changelog  
+
+## v5.7.2
+
+- Fixed - the image is not resized when right clicking inline image, selecting resize image and clicking ok. (#23)\
+  One of the checks (instanceof File) was failing when it should not. I have changed it to .constructor.name, which is more reliable in modern browsers, at least according to a comment on SO.
+- Fixed - the context item text is not updated (#23)\
+  After the context item text was changed when displaying an error (e.g. the image is too small), it was not reset to "Resize this image..." when displayed again for different image.
+
 ## v5.7.1
+
 - Fixed - Notification not displayed when inserting an inline image (#19)
 
 ## v5.7
