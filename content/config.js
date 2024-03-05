@@ -33,6 +33,7 @@ async function getAll() {
     "options.logenabled":false,
     "options.contextInfo":false,
     "options.autoResize":"off",
+    "options.resizeInReplyForward": false,
     resizeAttachmentsOnSend: false,
   });
 
@@ -71,6 +72,7 @@ async function getAll() {
   cb_logenabled.checked=prefs["options.logenabled"]
   cb_contextInfoEnabled.checked=prefs["options.contextInfo"]
   s_autoResize.value=prefs["options.autoResize"]
+  cb_forwardReplyResize.checked=prefs["options.resizeInReplyForward"]
   // cb_logenabled.checked = prefs["log.enabled"];
   s_resizeonsend.value = prefs.resizeAttachmentsOnSend;
 
@@ -112,6 +114,7 @@ addEventListener("load", async () => {
   cb_logenabled.addEventListener("change", setCheckbox);
   cb_contextInfoEnabled.addEventListener("change", setCheckbox);
   s_autoResize.addEventListener("change", setAutoResizeOption);
+  cb_forwardReplyResize.addEventListener("change", setCheckbox);
   browser.storage.onChanged.addListener(() => {
     if (!settingFromThisPage) {
       getAll();

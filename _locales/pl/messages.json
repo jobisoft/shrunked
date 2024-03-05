@@ -29,6 +29,9 @@
   "advanced.autoResize.inline": {
     "message": "Automatycznie zmniejszaj tylko dodane w treści"
   },
+  "advanced.resizeInReplyForward.label": {
+    "message": "Zmniejszaj również obrazki w trakcie ich forwardowania / w odopowiedzi"
+  },
   "advanced.orient.label": {
     "message": "Automatycznie obróć obrazki"
   },

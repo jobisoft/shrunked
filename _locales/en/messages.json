@@ -29,6 +29,9 @@
   "advanced.autoResize.inline": {
     "message": "Auto resize inline images"
   },
+  "advanced.resizeInReplyForward.label": {
+    "message": "Also resize images when replying / forwarding them"
+  },
   "advanced.orient.label": {
     "message": "Automatically rotate images"
   },

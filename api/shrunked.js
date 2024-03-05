@@ -267,6 +267,7 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
             "options.logenabled": false,
             "options.contextInfo": true,
             "options.autoResize": "off",
+            "options.resizeInReplyForward": false,
             resizeAttachmentsOnSend: false,
           };
 
@@ -292,14 +293,16 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
           return prefsToStore;
         },
         showNotification(tab, imageCount) {
+          
           return new Promise((resolve, reject) => {
             let question = localeData.localizeMessage(
               imageCount == 1 ? "question.single" : "question.plural"
             );
-
+            
             let nativeTab = tabManager.get(tab.id).nativeTab;
+            //message display notification from https://github.com/jobisoft/notificationbar-API/blob/master/notificationbar/implementation.js
             let notifyBox =
-              nativeTab.gComposeNotification || nativeTab.gNotification.notificationbox;
+              nativeTab.gComposeNotification || ((nativeTab.gNotification)?nativeTab.gNotification.notificationbox:null) || nativeTab.chromeBrowser.contentWindow.messageBrowser.contentWindow.gMessageNotificationBar.msgNotificationBar;
             let notification = notifyBox.getNotificationWithValue("shrunked-notification");
                           if (imageCount == 0) {
                 if (notification) {

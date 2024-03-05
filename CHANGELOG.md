@@ -1,5 +1,11 @@
 # Changelog  
 
+## v5.8.0
+
+- Added option to also resize images from the original e-mail when using forward / reply (#15). This feature also works with autoresize.\
+- Fixed wrong variable name in content_script.js, that caused the log to console option to always be disabled.
+- Added a simple "How to use" section to readme.
+
 ## v5.7.2
 
 - Fixed - the image is not resized when right clicking inline image, selecting resize image and clicking ok. (#23)\
