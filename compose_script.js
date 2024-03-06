@@ -4,12 +4,27 @@ let config = {
   characterData: false,
   subtree: true,
 };
-let logenabled=false;
+let resizeWhenForwardReply= false;
+let logenabled = false;
+async function startup(){
+  browser.runtime.sendMessage({
+    type: "getOptions",
+  }).then((response)=>{
+    resizeWhenForwardReply=response["resizeInReplyForward"];
+    logenabled = response["logenabled"];
+    if(resizeWhenForwardReply) 
+      parseInlineAtStart();
+  })
+  
+  
+  
+}
+startup();
 let observer = new MutationObserver(function(mutations) {
   for (let mutation of mutations) {
     if (mutation.addedNodes && mutation.addedNodes.length) {
       if(logenabled)
-      console.log("Nodes added to message: " + mutation.addedNodes.length);
+        console.log("Nodes added to message: " + mutation.addedNodes.length);
       for (let target of mutation.addedNodes) {
         maybeResizeInline(target);
       }
@@ -17,12 +32,19 @@ let observer = new MutationObserver(function(mutations) {
   }
 });
 observer.observe(document.body, config);
-browser.storage.local.get({
-  "options.logenabled": false,
-}).then((response) =>
+ 
+async function parseInlineAtStart()
 {
-  logenabled = logenabled["options.logenabled"];
-});
+  if(logenabled)
+    console.log(`parsing inline images at compose start`);
+  let existingInline=document.body.getElementsByTagName("IMG");
+  for(let i=0;i<existingInline.length;i++)
+  {
+    if(logenabled)
+      console.log(`parsing image ${i}, node ${existingInline[i].nodeName}`);
+    await maybeResizeInline(existingInline[i]); 
+  }
+}
 
 async function maybeResizeInline(target) {
   if (target.nodeName == "IMG") {
@@ -40,12 +62,12 @@ async function maybeResizeInline(target) {
             console.log("Not resizing - image is part of signature");
           return;
         }
-        if (parent.getAttribute("type") == "cite") {
+        if (parent.getAttribute("type") == "cite"  && resizeWhenForwardReply==false) {
           if (logenabled)
             console.log("Not resizing - image is part of message being replied to");
           return;
         }
-        if (parent.classList.contains("moz-forward-container")) {
+        if (parent.classList.contains("moz-forward-container") && resizeWhenForwardReply==false) {
           if (logenabled)
             console.log("Not resizing - image is part of forwarded message");
           return;
@@ -116,8 +138,12 @@ async function maybeResizeInline(target) {
       let destFile = await browser.runtime.sendMessage({
         type: "resizeFile",
         file: srcFile,
+      }).catch((err) => {
+        console.error(err);
+        return;
       });
-      if (destFile === null) {
+      
+      if (destFile === null || destFile === undefined) {
         return;
       }
       let destURL = await new Promise(resolve => {
@@ -131,7 +157,7 @@ async function maybeResizeInline(target) {
         };
         reader.readAsDataURL(destFile);
       });
-
+      
       target.setAttribute("src", destURL);
       target.removeAttribute("width");
       target.removeAttribute("height");

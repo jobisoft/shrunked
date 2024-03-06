@@ -7,18 +7,19 @@ async function shouldResize(attachment, checkSize = true) {
   if (!checkSize) {
     return true;
   }
-  let { fileSizeMinimum } = await browser.storage.local.get({ fileSizeMinimum: 100 });
-  let file = await browser.compose.getAttachmentFile(attachment.id);
-  return file.size >= fileSizeMinimum * 1024;
+    let file = await browser.compose.getAttachmentFile(attachment.id);
+    return file.size >= fileSizeMinimum * 1024;
 }
 //get options and defaults from config
 let options={}
 let defaults={}
+let fileSizeMinimum=100;
 //check options on start and forward the logenabled/contextinfo setting to shrunked api
 loadOptions().then((response)=>
 {
   options=response.options;
   defaults=response.defaults;
+  fileSizeMinimum=response.fileSizeMinimum;
   logenabled=response.options.logenabled;
   contextInfo=response.options.contextInfo;
   if(logenabled)
@@ -38,7 +39,6 @@ browser.composeScripts.register({
     },
   ],
 });
-
 browser.runtime.onMessage.addListener(async (message, sender, callback) => {
   // Image added to body of message. Return a promise to the sender.
   if (message.type == "resizeFile") {  
@@ -52,6 +52,11 @@ browser.runtime.onMessage.addListener(async (message, sender, callback) => {
   // Options window starting resize.
   if (message.type == "doResize") {
     doResize(message.tabId, message.maxWidth, message.maxHeight, message.quality);
+  }
+  if (message.type == "getOptions") {
+    if(options.resizeInReplyForward)
+      await processAllAttachments(sender.tab,null,true);
+    return options;
   }
   return undefined;
 });
@@ -122,12 +127,18 @@ browser.shrunked.onAttachmentContextClicked.addListener(async (tab, indicies) =>
 
 // Message sending.
 browser.compose.onBeforeSend.addListener(async (tab, details) => {
+  await processAllAttachments(tab,details,false);
+});
+async function processAllAttachments(tab, details,isOnDemand=false) {
   let result = {};
-  let { resizeAttachmentsOnSend } = await browser.storage.local.get({
-    resizeAttachmentsOnSend: false,
-  });
-  if (!resizeAttachmentsOnSend) {
-    return result;
+  if(!isOnDemand)
+  {
+    let { resizeAttachmentsOnSend } = await browser.storage.local.get({
+      resizeAttachmentsOnSend: false,
+    });
+    if (!resizeAttachmentsOnSend) {
+      return result;
+   }
   }
 
   tabMap.delete(tab.id);
@@ -136,7 +147,7 @@ browser.compose.onBeforeSend.addListener(async (tab, details) => {
   for (let a of attachments) {
     if (await shouldResize(a)) {
       let file = await browser.compose.getAttachmentFile(a.id);
-      let promise = beginResize(tab, file, false).then(async destFile => {
+      let promise = beginResize(tab, file, isOnDemand,false,true).then(async destFile => {
         if (destFile === null) {
           return;
         }
@@ -152,14 +163,13 @@ browser.compose.onBeforeSend.addListener(async (tab, details) => {
   if (!promises.length) {
     return result;
   }
-
-  await showOptionsDialog(tab);
+  if(!isOnDemand)
+    await showOptionsDialog(tab);
   await Promise.all(promises).catch(() => {
     result.cancel = true;
   });
   return result;
-});
-
+}
 // Get a promise that resolves when resizing is complete.
 // For auto resize we need to know if the image isInline and if this is an event that should trigger auto resize. This method is called multiple times, not only when adding attachemnt
 function beginResize(tab, file, notification = true,isInline=false,shouldResizeAuto=false) {
@@ -169,6 +179,7 @@ function beginResize(tab, file, notification = true,isInline=false,shouldResizeA
     }
     let sourceFiles = tabMap.get(tab.id);
     sourceFiles.push({ promise: { resolve, reject }, file });
+    
     //check if autoResize is on and if current event should trigger it (shouldResizeAuto) and also if auto resize is turned on for this type of image (inline/attachment)
     if(options.autoResize!="off" && shouldResizeAuto && ((options.autoResize=="inline" && isInline) || (options.autoResize=="attached" && !isInline) || options.autoResize=="all"))
     {
@@ -260,11 +271,14 @@ async function loadOptions(selectedOption=null)
       "options.logenabled":false,
       "options.contextInfo":true,
       "options.autoResize":"off",
+      "options.resizeInReplyForward":false,
       "default.maxWidth": 500,
       "default.maxHeight": 500,
       "default.quality": 75,
       "default.saveDefault": true,
+      "fileSizeMinimum": 100
     });
+    fileSizeMinimum=options['fileSizeMinimum'];
     defaults = {
       maxWidth: options['default.maxWidth'],
       maxHeight: options['default.maxHeight'],
@@ -280,11 +294,12 @@ async function loadOptions(selectedOption=null)
       logenabled: options["options.logenabled"],
       contextInfo: options["options.contextInfo"],
       autoResize:options["options.autoResize"],
+      resizeInReplyForward:options["options.resizeInReplyForward"]
     };
     
   }
   
-  return {"options":options,"defaults":defaults};
+  return {"options":options,"defaults":defaults,"fileSizeMinimum":fileSizeMinimum};
 }
 function cancelResize(tabId) {
   if (!tabMap.has(tabId)) {

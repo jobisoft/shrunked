@@ -7,9 +7,28 @@ Since the original repo is no longer mantained and became read-only on 28th of D
 
 Each time a compatible (JPG/PNG/BMP) image is attached to/inserted into new e-mail the user has the ability to resize the image. The resized image replaces previously inserted / attached one.  
 
+## Installation
+
+Head over to [release page](https://github.com/memeller/shrunked/releases/latest) and download the xpi. \
+If you are using Firefox, you will need to right click on the link and select "Save link as...", otherwise Firefox will try to install the xpi file in Firefox.\
+Open Thunderbird, open Add-ons (Tools -> Add-ons and Themes), select "Install Add-on From File..."\
+![install from file](/images/install_from_file.png)\
+and select the downloaded xpi.
+
+## How to use
+
+After installing the add-on, some options are set by default. Please adjust the options if, for example, you want images to be resized in reply/forward mode.\
+![png options](/images/options.png)\
+Each time you attach/insert an image into an email, a small notfication will appear asking if you would like to resize the image(s).\
+![png options](/images/notification.png)\
+If you select 'Yes', a small window will appear allowing you to set the target dimensions, see the size of the image before and after, etc.\
+![png options](/images/popup.png)\
+After confirming the resize, the attachments / inline images will be replaced with their resized versions.\
+
 ## New in this fork (vs darkrojan's version):
 
-- Added Autoresize (currently works only for newly added attachments / inline images). This can be enabled for all images / inline only / attachments only. When enabled, each time an image is inserted / attached, the requirements for the resize function are checked (file size / dimensions, the ones set in options panel). If the image should be resized, it will be resized and replaced automatically, without any user interaction.
+- Added support for resizing images when forwarding / replying to messages. This can be enabled in the options, disabled by default.
+- Added Autoresize. This can be enabled for all images / inline only / attachments only. When enabled, each time an image is inserted / attached, the requirements for the resize function are checked (file size / dimensions, the ones set in options panel). If the image should be resized, it will be resized and replaced automatically, without any user interaction.
 - Added PL lang support,
 - BMP support (converted to JPG when resized),
 - PNG support,
@@ -28,11 +47,6 @@ It is used by default, to use the previous algorithm please uncheck the correspo
 - If the selected file cannot be resized, the context menu item is disabled and shows additional information instead of item being hidden.
 - Console logging can be disabled.
 
-## Installation
-Head over to [release page](https://github.com/memeller/shrunked/releases/latest) and download the xpi. \
-If you are using Firefox you need to right click the link and select "Save link as...", otherwise Firefox will try to install the xpi file in Firefox.\
-Open Thunderbird, open Add-ons (Tools -> Add-ons and Themes), select "Install Add-on From File..."\
-![install from file](/images/install_from_file.png)\
-and select the downloaded xpi.
+
 
 ## Known issues

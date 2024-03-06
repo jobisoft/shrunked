@@ -91,6 +91,10 @@
                 "type":"boolean",
                 "optional":true
               },
+              "resizeInReplyForward":{
+                "type":"boolean",
+                "optional":true
+              },
               "autoResize":{
                 "type":"string",
                 "optional":true
