@@ -1,5 +1,9 @@
 # Changelog  
 
+## v5.8.1
+
+- Fixed error when autoresize is enabled and resize is set to "on sending mail". When sending email with these settings, autoresize would resize the images and remove them from the list of images to resize. When "when sending email" was selected, the options window tried to be created because there was no check if the autoresize option was turned on and if the options window should be ommitted. Since there was no check if the image list was empty, the code caused an exception that stopped the email sending process. (#26)
+
 ## v5.8.0
 
 - Added option to also resize images from the original e-mail when using forward / reply (#15). This feature also works with autoresize.\
