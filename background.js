@@ -163,7 +163,7 @@ async function processAllAttachments(tab, details,isOnDemand=false) {
   if (!promises.length) {
     return result;
   }
-  if(!isOnDemand)
+  if(!isOnDemand && (options.autoResize!="attached" || options.autoResize!="all"))
     await showOptionsDialog(tab);
   await Promise.all(promises).catch(() => {
     result.cancel = true;
@@ -203,7 +203,8 @@ browser.shrunked.onNotificationCancelled.addListener(tab => cancelResize(tab.id)
 
 async function showOptionsDialog(tab) {
   let sourceFiles = tabMap.get(tab.id);
-
+  if(sourceFiles === undefined)
+    return;
   let optionsWindow = await browser.windows.create({
     url: `content/options.xhtml?tabId=${tab.id}&count=${sourceFiles.length}`,
     type: "popup",
