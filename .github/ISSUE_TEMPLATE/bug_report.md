@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: The more info we have, the easier it is to fix the bug
 title: "[BUG]"
 labels: ''
 assignees: ''
@@ -33,4 +33,4 @@ If applicable, add screenshots to help explain your problem.
 
 
 **Additional context**
-Add any other context about the problem here.
+Add any other context about the problem here. Please add e.g. debug log (Tools -> Developer Tools -> Error console)
