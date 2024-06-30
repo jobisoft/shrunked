@@ -1,5 +1,20 @@
 # Changelog  
 
+## v5.8.2
+
+- Modified imports in shrunked.js and ShrunkedImage.jsm. In TB 128 beta the lines like
+  
+      ChromeUtils.import("resource:///modules/ExtensionSupport.jsm")
+  would no longer work properly because they should now be loaded via:
+  
+      ChromeUtils.importESModule("resource:///modules/ExtensionSupport.sys.mjs")
+  (switch from Mozilla-specific JSMs in privileged code to standard ECMAScript modules - jsm -> mjs, you can read about ESM and ESMification [here](https://groups.google.com/a/mozilla.org/g/dev-platform/c/6ahIMBNIamo?pli=1))\
+  Unfortunately, the new way did not work in the latest stable releases, so I came up with a simple solution to switch between these two ways.
+  There may be a better solution than using try and catch to get the right file to load - I have not seen any solutions to this in the official documentation.
+  Services are now imported automatically, so we have
+
+      const Services = globalThis.Services || ChromeUtils.import("resource://gre/modules/Services.jsm").Services;
+  which is taken from the TB docs and provides a fallback to the previous import if the TB version used does not yet support global services.
 ## v5.8.1
 
 - Fixed error when autoresize is enabled and resize is set to "on sending mail". When sending email with these settings, autoresize would resize the images and remove them from the list of images to resize. When "when sending email" was selected, the options window tried to be created because there was no check if the autoresize option was turned on and if the options window should be ommitted. Since there was no check if the image list was empty, the code caused an exception that stopped the email sending process. (#26)
