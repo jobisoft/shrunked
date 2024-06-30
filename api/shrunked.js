@@ -1,13 +1,22 @@
 // eslint-disable-next-line
 Cu.importGlobalProperties(["fetch", "File", "FileReader"]);
 
-const { ExtensionCommon } = ChromeUtils.import("resource://gre/modules/ExtensionCommon.jsm");
-const { ExtensionSupport } = ChromeUtils.import("resource:///modules/ExtensionSupport.jsm");
-
-const {
-  ExtensionUtils: { ExtensionError },
-} = ChromeUtils.import("resource://gre/modules/ExtensionUtils.jsm");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {ExtensionCommon} = importModuleFallback("resource://gre/modules/ExtensionCommon.sys.mjs","resource://gre/modules/ExtensionCommon.jsm");
+const { ExtensionSupport } = importModuleFallback("resource:///modules/ExtensionSupport.sys.mjs","resource:///modules/ExtensionSupport.jsm");
+var {
+ExtensionUtils: { ExtensionError }
+} = importModuleFallback("resource://gre/modules/ExtensionUtils.sys.mjs","resource:///modules/ExtensionUtils.jsm");
+function importModuleFallback(primary,secondary)
+{
+try 
+  { 
+    return ChromeUtils.importESModule(primary);
+  } catch(e) 
+  { 
+    return ChromeUtils.import(secondary);
+  }
+}
+const Services = globalThis.Services || ChromeUtils.import("resource://gre/modules/Services.jsm").Services;
 
 const resProto = Cc["@mozilla.org/network/protocol;1?name=resource"].getService(
   Ci.nsISubstitutingProtocolHandler

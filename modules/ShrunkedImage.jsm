@@ -4,7 +4,7 @@ var EXPORTED_SYMBOLS = ["ShrunkedImage"];
 /* globals ExifData, OS, Services */
 ChromeUtils.defineModuleGetter(this, "ExifData", "resource://shrunked/ExifData.jsm");
 ChromeUtils.defineModuleGetter(this, "OS", "resource://gre/modules/osfile.jsm");
-ChromeUtils.defineModuleGetter(this, "Services", "resource://gre/modules/Services.jsm");
+const Services = globalThis.Services || ChromeUtils.import("resource://gre/modules/Services.jsm").Services;
 
 var XHTMLNS = "http://www.w3.org/1999/xhtml";
 
