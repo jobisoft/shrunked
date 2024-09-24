@@ -30,7 +30,7 @@ If applicable, add screenshots to help explain your problem.
 - Is the notification displayed when image is inserted inline 
 - Is there an option to resize the image when right clicking on attached / inline images
 7. Did this feature work in previous versions
-
+8. Have you tried updating the addon to the latest version by downloading latest [release](https://github.com/memeller/shrunked/releases)
 
 **Additional context**
 Add any other context about the problem here. Please add e.g. debug log (Tools -> Developer Tools -> Error console)
