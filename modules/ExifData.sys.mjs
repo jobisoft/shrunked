@@ -1,9 +1,9 @@
-var EXPORTED_SYMBOLS = ["ExifData"];
-
+const lazy = {};
 /* globals Shrunked */
-ChromeUtils.defineModuleGetter(this, "Shrunked", "resource://shrunked/Shrunked.jsm");
-
-function ExifData() { }
+ChromeUtils.defineESModuleGetters(lazy, {
+Shrunked: "resource://shrunked/Shrunked.sys.mjs",
+});
+export function ExifData() { }
 ExifData.prototype = {
   exif1: null,
   exif2: null,

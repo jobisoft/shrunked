@@ -55,7 +55,7 @@ addEventListener("load", async () => {
     tb_width.value = maxWidth;
     tb_height.value = maxHeight;
   }
-
+  s_quality.value=quality;
   cb_savedefault.checked = prefs["default.saveDefault"];
 
   setSize();

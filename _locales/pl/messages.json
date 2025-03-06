@@ -194,7 +194,7 @@
     "message": "Poprzedni obraz"
   },
   "preview.resized": {
-    "message": "Nowe wymiary obrazu: $WIDTH$ px × $HEIGHT$ px",
+    "message": "Szacowane wymiary obrazu: $WIDTH$ px × $HEIGHT$ px",
     "placeholders": {
       "height": {
         "content": "$2",
