@@ -2,11 +2,11 @@
   "manifest_version": 2,
   "name": "__MSG_extensionName__",
   "description": "__MSG_extensionDescription__",
-  "version": "5.8.2",
+  "version": "5.9.1",
   "applications": {
     "gecko": {
       "id": "shrunked@mllr.pl",
-      "strict_min_version": "98.0"
+      "strict_min_version": "126.0"
     }
   },
   "author": "Geoff Lankow, memeller",

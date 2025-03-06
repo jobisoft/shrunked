@@ -194,7 +194,7 @@
     "message": "Previous image"
   },
   "preview.resized": {
-    "message": "Resized to: $WIDTH$ px × $HEIGHT$ px",
+    "message": "Resized to (estimate): $WIDTH$ px × $HEIGHT$ px",
     "placeholders": {
       "height": {
         "content": "$2",

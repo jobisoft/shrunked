@@ -1,5 +1,9 @@
 # Changelog  
+## v5.9.1
 
+- Finished ESMification process - as of TB 136 the transition period is over and old APIs no longer work. Since the extension used pre-esmification methods previously, the extension stopped working in TB 136. This is fixed (#40)
+- fixed slider value not being loaded when opening options window (#37)
+- added information that the dimensions of the image are approximate as the values shown were not exact. I do not see this as a main feature of this webextension, so I will not pursue this issue further (#38)
 ## v5.8.2
 
 - Modified imports in shrunked.js and ShrunkedImage.jsm. In TB 128 beta the lines like

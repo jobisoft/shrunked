@@ -47,6 +47,7 @@ It is used by default, to use the previous algorithm please uncheck the correspo
 - If the selected file cannot be resized, the context menu item is disabled and shows additional information instead of item being hidden.
 - Console logging can be disabled.
 
-
+## Changelog
+[CHANGELOG.md](CHANGELOG.md)
 
 ## Known issues

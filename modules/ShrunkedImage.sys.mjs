@@ -1,14 +1,15 @@
 /* globals ChromeWorker, fetch, File, URL */
-var EXPORTED_SYMBOLS = ["ShrunkedImage"];
-
+const lazy = {};
 /* globals ExifData, OS, Services */
-ChromeUtils.defineModuleGetter(this, "ExifData", "resource://shrunked/ExifData.jsm");
-ChromeUtils.defineModuleGetter(this, "OS", "resource://gre/modules/osfile.jsm");
-const Services = globalThis.Services || ChromeUtils.import("resource://gre/modules/Services.jsm").Services;
+ChromeUtils.defineESModuleGetters(lazy, {
+ExifData: "resource://shrunked/ExifData.sys.mjs",
+OS: "resource://gre/modules/osfile.sys.mjs",
+});
+const Services = globalThis.Services;
 
 var XHTMLNS = "http://www.w3.org/1999/xhtml";
 
-function ShrunkedImage(source, maxWidth, maxHeight, quality, options) {
+export function ShrunkedImage(source, maxWidth, maxHeight, quality, options) {
   this.maxWidth = maxWidth;
   this.maxHeight = maxHeight;
   this.imageFormat="image/jpeg";

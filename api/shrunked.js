@@ -364,12 +364,12 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
           });
         },
         async resizeFile(file, maxWidth, maxHeight, quality, options) {
-          const { ShrunkedImage } = ChromeUtils.import("resource://shrunked/ShrunkedImage.jsm");
+          const { ShrunkedImage } = ChromeUtils.importESModule("resource://shrunked/ShrunkedImage.sys.mjs");
 
           return new ShrunkedImage(file, maxWidth, maxHeight, quality, options).resize();
         },
         async estimateSize(file, maxWidth, maxHeight, quality) {
-          const { ShrunkedImage } = ChromeUtils.import("resource://shrunked/ShrunkedImage.jsm");
+          const { ShrunkedImage } = ChromeUtils.importESModule("resource://shrunked/ShrunkedImage.sys.mjs");
           return new ShrunkedImage(file, maxWidth, maxHeight, quality).estimateSize();
         },
       },
