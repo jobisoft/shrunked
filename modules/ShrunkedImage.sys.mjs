@@ -2,9 +2,10 @@
 const lazy = {};
 /* globals ExifData, OS, Services */
 ChromeUtils.defineESModuleGetters(lazy, {
-ExifData: "resource://shrunked/ExifData.sys.mjs",
+
 OS: "resource://gre/modules/osfile.sys.mjs",
 });
+import {ExifData} from "resource://shrunked/ExifData.sys.mjs";
 const Services = globalThis.Services;
 
 var XHTMLNS = "http://www.w3.org/1999/xhtml";
