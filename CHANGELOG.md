@@ -1,4 +1,8 @@
 # Changelog  
+## v5.9.2
+
+- Fixed EXIF import
+
 ## v5.9.1
 
 - Finished ESMification process - as of TB 136 the transition period is over and old APIs no longer work. Since the extension used pre-esmification methods previously, the extension stopped working in TB 136. This is fixed (#40)

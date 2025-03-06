@@ -53,18 +53,21 @@ ExifData.prototype = {
   async read(readable) {
     try {
       this.readable = readable;
+      
       let array = await this.readable.read(8);
-      if ((array[0] != 0xff || array[1] != 0xd8) || (array[0] != 0x89 || array[1] != 0x50 || array[2] != 0x4E || array[3] != 0x47)) {
+      
+      if ((array[0] != 0xff || array[1] != 0xd8) && (array[0] != 0x89 || array[1] != 0x50 || array[2] != 0x4E || array[3] != 0x47)) {
         throw "Not a JPEG/PNG";
       }
       if (array[2] != 0xff || array[3] != 0xe1) {
         throw "No valid EXIF data";
       }
       array = await this.readable.read(16);
+      
       if (array[8] == 0x49 && array[9] == 0x49) {
         this.littleEndian = true;
       } else if (array[8] != 0x4d || array[9] != 0x4d) {
-        throw "Invalid bytes";
+       // throw "Invalid bytes";
       }
 
       this.exif1 = await this._readSection();
