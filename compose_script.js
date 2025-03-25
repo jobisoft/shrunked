@@ -184,6 +184,9 @@ async function maybeResizeInline(target) {
       let destFile = await browser.runtime.sendMessage({
         type: "resizeFile",
         file: srcFile,
+      }).catch((err) => {
+        console.error(err);
+        return;
       });
 
       if (destFile === null || destFile === undefined) {
