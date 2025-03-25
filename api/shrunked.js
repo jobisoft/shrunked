@@ -1,22 +1,15 @@
 // eslint-disable-next-line
 Cu.importGlobalProperties(["fetch", "File", "FileReader"]);
 
-const {ExtensionCommon} = importModuleFallback("resource://gre/modules/ExtensionCommon.sys.mjs","resource://gre/modules/ExtensionCommon.jsm");
-const { ExtensionSupport } = importModuleFallback("resource:///modules/ExtensionSupport.sys.mjs","resource:///modules/ExtensionSupport.jsm");
-var {
-ExtensionUtils: { ExtensionError }
-} = importModuleFallback("resource://gre/modules/ExtensionUtils.sys.mjs","resource:///modules/ExtensionUtils.jsm");
-function importModuleFallback(primary,secondary)
-{
-try 
-  { 
-    return ChromeUtils.importESModule(primary);
-  } catch(e) 
-  { 
-    return ChromeUtils.import(secondary);
-  }
-}
-const Services = globalThis.Services || ChromeUtils.import("resource://gre/modules/Services.jsm").Services;
+var { ExtensionCommon } = ChromeUtils.importESModule(
+  "resource://gre/modules/ExtensionCommon.sys.mjs"
+);
+var { ExtensionSupport } = ChromeUtils.importESModule(
+  "resource:///modules/ExtensionSupport.sys.mjs"
+);
+var { ExtensionUtils: { ExtensionError } } = ChromeUtils.importESModule(
+  "resource://gre/modules/ExtensionUtils.sys.mjs"
+);
 
 const resProto = Cc["@mozilla.org/network/protocol;1?name=resource"].getService(
   Ci.nsISubstitutingProtocolHandler
@@ -41,92 +34,10 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
       ExtensionSupport.registerWindowListener("ext-shrunked-compose", {
         chromeURLs: ["chrome://messenger/content/messengercompose/messengercompose.xhtml"],
         onLoadWindow(window) {
-          let composeContext = window.document.getElementById("msgComposeContext");
           let attachmentContext = window.document.getElementById("msgComposeAttachmentItemContext");
           if (!attachmentContext) {
             return;
           }
-
-          let composeSeparator = composeContext.insertBefore(
-            window.document.createXULElement("menuseparator"),
-            window.document.getElementById("spellCheckSeparator")
-          );
-          composeSeparator.id = "shrunked-content-context-separator";
-          let composeMenuItem = composeContext.insertBefore(
-            window.document.createXULElement("menuitem"),
-            window.document.getElementById("spellCheckSeparator")
-          );
-          composeMenuItem.id = "shrunked-content-context-item";
-          composeMenuItem.label = localeData.localizeMessage("context.single");
-
-          composeContext.addEventListener("popupshowing", function () {
-            let editor = window.GetCurrentEditorElement();
-            let target = editor.contentDocument.elementFromPoint(
-              editor._contextX,
-              editor._contextY
-            );
-            let isDisabled = true;
-            if (target.nodeName == "IMG") {
-              if (logenabled)
-                console.log("Context menu on an <IMG>");
-              if (imageIsAccepted(target.src)) {
-                if (target.width > 500 || target.height > 500) {
-                  isDisabled = false;
-                  composeMenuItem.label = localeData.localizeMessage("context.single");
-                } else {
-                  if (logenabled)
-                    console.log("Not resizing - image is too small");
-                  composeMenuItem.label = localeData.localizeMessage("context.tooSmall");
-                }
-              } else {
-                if (logenabled)
-                  console.log("Not resizing - image is not JPEG / PNG");
-                composeMenuItem.label = localeData.localizeMessage("context.unsupportedFile");
-              }
-            }
-            composeMenuItem.disabled=isDisabled;
-            
-          });
-
-          composeMenuItem.addEventListener("command", async () => {
-            let editor = window.GetCurrentEditorElement();
-            let target = editor.contentDocument.elementFromPoint(
-              editor._contextX,
-              editor._contextY
-            );
-            let srcName = "";
-            let nameParts = target.src.match(/;filename=([^,;]*)[,;]/);
-            if (nameParts) {
-              srcName = decodeURIComponent(nameParts[1]);
-            }
-            let response = await fetch(target.src);
-            let srcBlob = await response.blob();
-            let srcFile = new File([srcBlob], srcName);
-
-            let result = await extension.emit("shrunked-compose-context", window, srcFile);
-            if (!result || !Array.isArray(result) || (result[0].constructor.name!="File")) {
-              if (logenabled)
-                console.log("Unexpected return:", result[0]);
-              return;
-            }
-            let [destFile] = result;
-
-            let destURL = await new Promise(resolve => {
-              let reader = new FileReader();
-              reader.onloadend = function () {
-                let dataURL = reader.result;
-                let headerIndexEnd = dataURL.indexOf(";");
-                dataURL = reader.result.substring(0, headerIndexEnd) + ";filename=" + encodeURIComponent(changeExtensionIfNeeded(destFile.name)) + dataURL.substring(headerIndexEnd);
-                resolve(dataURL);
-              };
-              reader.readAsDataURL(destFile);
-            });
-
-            target.setAttribute("src", destURL);
-            target.removeAttribute("width");
-            target.removeAttribute("height");
-            target.setAttribute("shrunked:resized", "true");
-          });
 
           let indicies = [];
           let attachmentMenuItem = attachmentContext.insertBefore(
@@ -212,21 +123,6 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
             extension.on("shrunked-cancelled", callback);
             return function () {
               extension.off("shrunked-cancelled", callback);
-            };
-          },
-        }).api(),
-        onComposeContextClicked: new ExtensionCommon.EventManager({
-          context,
-          name: "shrunked.onComposeContextClicked",
-          register(fire) {
-            function callback(event, window, file) {
-              let tab = extension.tabManager.getWrapper(window);
-              return fire.async(tab.convert(), file);
-            }
-
-            extension.on("shrunked-compose-context", callback);
-            return function () {
-              extension.off("shrunked-compose-context", callback);
             };
           },
         }).api(),

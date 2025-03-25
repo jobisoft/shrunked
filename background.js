@@ -1,5 +1,7 @@
 var tabMap = new Map();
 let logenabled=true;
+let lastContextClickedFile;
+
 async function shouldResize(attachment, checkSize = true) {
   if (!attachment.name.toLowerCase().match(/((\.jpe?g)|(\.png)|(\.bmp))$/)) {
     return false;
@@ -21,10 +23,9 @@ loadOptions().then((response)=>
   defaults=response.defaults;
   fileSizeMinimum=response.fileSizeMinimum;
   logenabled=response.options.logenabled;
-  contextInfo=response.options.contextInfo;
   if(logenabled)
     console.info("Shrunked Extension: Debug is enabled");
-  browser.shrunked.setOptions(logenabled,contextInfo);
+  browser.shrunked.setOptions(logenabled, options.contextInfo);
 });
 browser.shrunked.migrateSettings().then(prefsToStore => {
   if (prefsToStore) {
@@ -58,6 +59,20 @@ browser.runtime.onMessage.addListener(async (message, sender, callback) => {
       await processAllAttachments(sender.tab,null,true);
     return options;
   }
+  // Content script wants to update the context menu for the composer.
+  if (message.type == "updateComposeContextMenuEntry") {
+    await browser.menus.update(
+      "composeContextMenuEntry",
+      {
+        title: browser.i18n.getMessage(message.composeContextMenuEntryStatus.label),
+        enabled: !message.composeContextMenuEntryStatus.disabled,
+      }
+    );
+    await browser.menus.refresh();
+    lastContextClickedFile = message.file;
+    return;
+  }
+
   return undefined;
 });
 
@@ -87,16 +102,29 @@ browser.compose.onAttachmentAdded.addListener(async (tab, attachment) => {
 });
 
 // Content context menu item.
-browser.shrunked.onComposeContextClicked.addListener(async (tab, file) => {
-  tabMap.delete(tab.id);
-  return new Promise((resolve, reject) => {
-    beginResize(tab, file, false).then(resolve, reject).catch(error => {
-      if(logenabled)
-        console.error('onComposeContextClicked', error);
+browser.menus.create({
+  id: "composeContextMenuEntry",
+  contexts: ["compose_body"],
+  title: browser.i18n.getMessage("context.single"),
+})
+browser.menus.onClicked.addListener(async (info, tab) => {
+  if (info.menuItemId == "composeContextMenuEntry") {
+    tabMap.delete(tab.id);
+    let destFile = await new Promise((resolve, reject) => {
+      beginResize(tab, lastContextClickedFile, false, true, false).then(resolve, reject).catch(error => {
+        if (logenabled) {
+          console.error('onComposeContextClicked', error);
+        }
+        return;
+      });
+      showOptionsDialog(tab);
     });
-    showOptionsDialog(tab);
-  });
-});
+    await browser.tabs.sendMessage(tab.id, {
+      type: "replaceTargetWithFile",
+      file: destFile
+    });
+  }
+})
 
 // Attachment menu item.
 browser.shrunked.onAttachmentContextClicked.addListener(async (tab, indicies) => {
@@ -326,11 +354,10 @@ browser.tabs.onCreated.addListener(tab => {
       options=response.options;
       defaults=response.defaults;
       logenabled=response.options.logenabled;
-      contextInfo=response.options.contextInfo;
       if(logenabled)
         console.info("Shrunked Extension: Debug is enabled");
-      browser.shrunked.setOptions(logenabled,contextInfo);
-    });   
+      browser.shrunked.setOptions(logenabled, options.contextInfo);
+    });
   }
 });
 function changeExtensionIfNeeded(filename) {
