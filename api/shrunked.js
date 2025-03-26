@@ -199,7 +199,7 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
         },
         showNotification(tab, imageCount) {
           
-          return new Promise((resolve, reject) => {
+          return new Promise(async (resolve, reject) => {
             let question = localeData.localizeMessage(
               imageCount == 1 ? "question.single" : "question.plural"
             );
@@ -209,7 +209,7 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
             let notifyBox =
               nativeTab.gComposeNotification || ((nativeTab.gNotification)?nativeTab.gNotification.notificationbox:null) || nativeTab.chromeBrowser.contentWindow.messageBrowser.contentWindow.gMessageNotificationBar.msgNotificationBar;
             let notification = notifyBox.getNotificationWithValue("shrunked-notification");
-                          if (imageCount == 0) {
+              if (imageCount == 0) {
                 if (notification) {
                   if (logenabled)
                     console.log("Removing resize notification");
@@ -248,7 +248,7 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
                 },
               ];
 
-              notification = notifyBox.appendNotification(
+              notification = await notifyBox.appendNotification(
                 "shrunked-notification",
                 {
                   label: question,
@@ -256,6 +256,7 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
                 },
                 buttons
               );
+              notification.dismissable = false;
               notification._promises = [{ resolve, reject }];
           });
         },
