@@ -1,3 +1,5 @@
+import * as utils from "./modules/utils.mjs"
+
 var tabMap = new Map();
 let logenabled=true;
 let lastContextClickedFile;
@@ -97,7 +99,7 @@ browser.compose.onAttachmentAdded.addListener(async (tab, attachment) => {
   
   await browser.compose.updateAttachment(tab.id, attachment.id, {
     file: destFile,
-    name: changeExtensionIfNeeded(destFile.name)
+    name: utils.changeExtensionIfNeeded(destFile.name)
   });
 });
 
@@ -147,7 +149,7 @@ browser.shrunked.onAttachmentContextClicked.addListener(async (tab, indicies) =>
         if (destFile === null) {
           return;
         }
-        browser.compose.updateAttachment(tab.id, a.id, { file: destFile, name: changeExtensionIfNeeded(destFile.name) });
+        browser.compose.updateAttachment(tab.id, a.id, { file: destFile, name: utils.changeExtensionIfNeeded(destFile.name) });
       }).catch(error => {
         if(logenabled)
           console.error('onAttachmentContextClicked', error);
@@ -184,7 +186,7 @@ async function processAllAttachments(tab, details,isOnDemand=false) {
         if (!destFile) {
           return;
         }
-        await browser.compose.updateAttachment(tab.id, a.id, { file: destFile, name: changeExtensionIfNeeded(destFile.name) });
+        await browser.compose.updateAttachment(tab.id, a.id, { file: destFile, name: utils.changeExtensionIfNeeded(destFile.name) });
       }).catch(error => {
         if(logenabled)
           console.error('onBeforeSend', error);
@@ -365,13 +367,3 @@ browser.tabs.onCreated.addListener(tab => {
     });
   }
 });
-function changeExtensionIfNeeded(filename) {
-  let src = filename.toLowerCase();
-  //if it is a bmp we will save it as jpeg
-  if (src.startsWith("data:image/bmp") || src.endsWith(".bmp")) {
-    return src.replace("bmp", "jpg");
-  }
-  else
-    return src;
-
-}

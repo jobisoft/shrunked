@@ -1,3 +1,5 @@
+import * as utils from "../modules/utils.mjs"
+
 /* eslint-env webextensions */
 
 /* globals rg_size, r_noresize, r_small, r_medium, r_large, r_custom, l_width, tb_width, l_height, tb_height, l_measure
@@ -134,7 +136,7 @@ async function loadImage(index) {
   }
 
   i_previewthumb.src = images[index].url;
-  l_previewfilename.textContent = changeExtensionIfNeeded(images[index].file.name);
+  l_previewfilename.textContent = utils.changeExtensionIfNeeded(images[index].file.name);
   if(images[index].file.name.startsWith("data:image/png") || images[index].file.name.endsWith(".png"))
     s_quality.disabled=true;
   else
@@ -225,12 +227,3 @@ b_cancel.addEventListener("click", async () => {
   let thisWindow = await browser.windows.getCurrent();
   browser.windows.remove(thisWindow.id);
 });
-function changeExtensionIfNeeded(filename) {
-  let src = filename.toLowerCase();
-  //if it is a bmp we will save it as jpeg
-  if (src.startsWith("data:image/bmp") || src.endsWith(".bmp")) {
-    return src.replace("bmp", "jpg");
-  }
-  else
-    return src;
-}
