@@ -109,7 +109,12 @@ browser.menus.create({
 })
 browser.menus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId == "composeContextMenuEntry") {
-    tabMap.delete(tab.id);
+    // CHECK: Should this be prevented, if there is already an open resize popup?
+
+    // Abort any pending resize promises, there could be one from the mutation
+    // observer in the content script registering the image being inserted.
+    cancelResize(tab.id);
+
     beginResize(tab, lastContextClickedFile, false, true).then(destFile => {
       if (!destFile) {
         return;
