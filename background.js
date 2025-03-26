@@ -91,7 +91,7 @@ browser.compose.onAttachmentAdded.addListener(async (tab, attachment) => {
   let file = await browser.compose.getAttachmentFile(attachment.id);
   //tell beginResize that this is not inline and that this event should trigger auto resize
   let destFile = await beginResize(tab, file,true,false,true);
-  if (destFile === null || destFile === undefined) {
+  if (!destFile) {
     return;
   }
   
@@ -110,19 +110,19 @@ browser.menus.create({
 browser.menus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId == "composeContextMenuEntry") {
     tabMap.delete(tab.id);
-    let destFile = await new Promise((resolve, reject) => {
-      beginResize(tab, lastContextClickedFile, false, true, false).then(resolve, reject).catch(error => {
-        if (logenabled) {
-          console.error('onComposeContextClicked', error);
-        }
+    beginResize(tab, lastContextClickedFile, false, true).then(destFile => {
+      if (!destFile) {
         return;
+      }
+      browser.tabs.sendMessage(tab.id, {
+        type: "replaceTargetWithFile",
+        file: destFile
       });
-      showOptionsDialog(tab);
+    }).catch(error => {
+      if(logenabled)
+        console.error('composeContextMenuEntry clicked', error);
     });
-    await browser.tabs.sendMessage(tab.id, {
-      type: "replaceTargetWithFile",
-      file: destFile
-    });
+    showOptionsDialog(tab);
   }
 })
 
@@ -176,7 +176,7 @@ async function processAllAttachments(tab, details,isOnDemand=false) {
     if (await shouldResize(a)) {
       let file = await browser.compose.getAttachmentFile(a.id);
       let promise = beginResize(tab, file, isOnDemand,false,true).then(async destFile => {
-        if (destFile === null) {
+        if (!destFile) {
           return;
         }
         await browser.compose.updateAttachment(tab.id, a.id, { file: destFile, name: changeExtensionIfNeeded(destFile.name) });
