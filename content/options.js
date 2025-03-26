@@ -177,7 +177,7 @@ async function updateEstimate() {
       l_previewresizedfilesize.textContent = browser.i18n.getMessage(
         "preview.resizedfilesize.estimating"
       );
-      estimate = await browser.shrunked.estimateSize(
+      estimate = await utils.estimateSize(
         images[currentIndex].file,
         maxWidth,
         maxHeight,
@@ -218,7 +218,6 @@ b_ok.addEventListener("click", async () => {
     maxHeight,
     quality,
   });
-
   let thisWindow = await browser.windows.getCurrent();
   browser.windows.remove(thisWindow.id);
 });

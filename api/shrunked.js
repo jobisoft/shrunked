@@ -11,28 +11,12 @@ var { ExtensionUtils: { ExtensionError } } = ChromeUtils.importESModule(
   "resource://gre/modules/ExtensionUtils.sys.mjs"
 );
 
-const resProto = Cc["@mozilla.org/network/protocol;1?name=resource"].getService(
-  Ci.nsISubstitutingProtocolHandler
-);
-
-let ready = false;
 let logenabled = false;
 
 var shrunked = class extends ExtensionCommon.ExtensionAPI {
   getAPI(context) {
     let { extension } = context;
     let { localeData, tabManager } = extension;
-
-    if (!ready) {
-      ready = true;
-
-      resProto.setSubstitution(
-        "shrunked",
-        Services.io.newURI("modules/", null, this.extension.rootURI)
-      );
-
-      context.callOnClose(this);
-    }
 
     return {
       shrunked: {
@@ -176,20 +160,10 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
               notification._promises = [{ resolve, reject }];
           });
         },
-        async resizeFile(file, maxWidth, maxHeight, quality, options) {
-          const { ShrunkedImage } = ChromeUtils.importESModule("resource://shrunked/ShrunkedImage.sys.mjs");
-
-          return new ShrunkedImage(file, maxWidth, maxHeight, quality, options).resize();
-        },
-        async estimateSize(file, maxWidth, maxHeight, quality) {
-          const { ShrunkedImage } = ChromeUtils.importESModule("resource://shrunked/ShrunkedImage.sys.mjs");
-          return new ShrunkedImage(file, maxWidth, maxHeight, quality).estimateSize();
-        },
       },
     };
   }
 
   close() {
-    resProto.setSubstitution("shrunked", null);
   }
 };

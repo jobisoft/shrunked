@@ -61,7 +61,7 @@ browser.runtime.onMessage.addListener(async (message, sender, callback) => {
   }
   // Options window starting resize.
   if (message.type == "doResize") {
-    doResize(message.tabId, message.maxWidth, message.maxHeight, message.quality);
+    return doResize(message.tabId, message.maxWidth, message.maxHeight, message.quality);
   }
   if (message.type == "getOptions") {
     if(options.resizeInReplyForward)
@@ -363,7 +363,7 @@ async function doResize(tabId, maxWidth, maxHeight, quality,file="") {
   for (let source of sourceFiles) {
     if(file!="" && source.file!=file)
     continue;
-    let destFile = await browser.shrunked.resizeFile(
+    let destFile = await utils.resizeFile(
       source.file,
       maxWidth,
       maxHeight,
