@@ -9,21 +9,6 @@
         "parameters": []
       },
       {
-        "name": "setOptions",
-        "type": "function",
-        "async": true,
-        "parameters": [
-          {
-            "name": "isDebugEnabled",
-            "type": "boolean"
-          },
-          {
-            "name": "isContextInfoEnabled",
-            "type": "boolean"
-          }
-        ]
-      },
-      {
         "name": "showNotification",
         "type": "function",
         "async": true,
@@ -147,23 +132,6 @@
           {
             "name": "tab",
             "$ref": "tabs.Tab"
-          }
-        ]
-      },
-      {
-        "name": "onAttachmentContextClicked",
-        "type": "function",
-        "parameters": [
-          {
-            "name": "tab",
-            "$ref": "tabs.Tab"
-          },
-          {
-            "name": "indicies",
-            "type": "array",
-            "items": {
-              "type": "integer"
-            }
           }
         ]
       }

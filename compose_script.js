@@ -195,7 +195,7 @@ async function maybeResizeInline(target) {
         return;
       });
 
-      if (destFile === null || destFile === undefined) {
+      if (!destFile) {
         return;
       }
       
