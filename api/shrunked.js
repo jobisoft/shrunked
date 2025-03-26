@@ -279,8 +279,6 @@ var shrunked = class extends ExtensionCommon.ExtensionAPI {
 
     for (let window of Services.wm.getEnumerator("msgcompose")) {
       for (let selector of [
-        "#shrunked-content-context-separator",
-        "#shrunked-content-context-item",
         "#shrunked-attachment-context-item",
         `notification[value="shrunked-notification"]`,
       ]) {
