@@ -16,8 +16,63 @@ async function startup(){
       parseInlineAtStart();
   })
   
-  
-  
+  // Listener to evaluate context clicked elements.
+  document.addEventListener("contextmenu", async (e) => {
+    let composeContextMenuEntryStatus = {
+      disabled: true,
+      label: "context.single"
+    };
+    let target = document.elementFromPoint(
+      e.clientX,
+      e.clientY,
+    );
+
+    if (target?.nodeName == "IMG") {
+      if (logenabled) {
+        console.log("Context menu on an <IMG>");
+      }
+
+      if (imageIsAccepted(target)) {
+        if (target.width > 500 || target.height > 500) {
+          composeContextMenuEntryStatus.disabled = false;
+        } else {
+          if (logenabled) {
+            console.log("Not resizing - image is too small");
+          }
+          composeContextMenuEntryStatus.label = "context.tooSmall";
+        }
+      } else {
+        if (logenabled) {
+          console.log("Not resizing - image is not JPEG / PNG");
+        }
+        composeContextMenuEntryStatus.label = "context.tooSmall"
+      }
+    }
+
+    // Create an identifier on the node, so it can be found later, but clean up
+    // the DOM from any earlier actions.
+    const selectedNodes = document.querySelectorAll('[data-currently-selected-for-shrunked]');
+    selectedNodes.forEach(node => {
+      delete node.dataset.currentlySelectedForShrunked;
+    });
+    target.dataset.currentlySelectedForShrunked = true;
+    let file = composeContextMenuEntryStatus.disabled ? null : await getFileFromTarget(target)
+
+    await browser.runtime.sendMessage({
+      type: "updateComposeContextMenuEntry",
+      composeContextMenuEntryStatus,
+      file
+    })
+  })
+
+  browser.runtime.onMessage.addListener(request => {
+    switch (request.type) {
+      case "replaceTargetWithFile": {
+        let target = document.querySelector('[data-currently-selected-for-shrunked]');
+        return replaceTargetWithFile(target, request.file);
+      }
+    }
+  })
 }
 startup();
 let observer = new MutationObserver(function(mutations) {
@@ -125,16 +180,7 @@ async function maybeResizeInline(target) {
         }
       }
 
-      let srcName = "";
-      let nameParts = target.src.match(/;filename=([^,;]*)[,;]/);
-      if (nameParts) {
-        srcName = decodeURIComponent(nameParts[1]);
-      }
-
-      let response = await fetch(src);
-      let srcBlob = await response.blob();
-      let srcFile = new File([srcBlob], srcName);
-
+      let srcFile = await getFileFromTarget(target);
       let destFile = await browser.runtime.sendMessage({
         type: "resizeFile",
         file: srcFile,
@@ -142,26 +188,12 @@ async function maybeResizeInline(target) {
         console.error(err);
         return;
       });
-      
+
       if (destFile === null || destFile === undefined) {
         return;
       }
-      let destURL = await new Promise(resolve => {
-        let reader = new FileReader();
-        reader.onloadend = function() {
-          let dataURL = reader.result;
-          let headerIndexEnd = dataURL.indexOf(";");
-          dataURL =
-            reader.result.substring(0, headerIndexEnd) + ";filename=" + encodeURIComponent(changeExtensionIfNeeded(destFile.name)) + dataURL.substring(headerIndexEnd);
-          resolve(dataURL);
-        };
-        reader.readAsDataURL(destFile);
-      });
       
-      target.setAttribute("src", destURL);
-      target.removeAttribute("width");
-      target.removeAttribute("height");
-      target.setAttribute("shrunked:resized", "true");
+      await replaceTargetWithFile(target, destFile);
     } catch (ex) {
       if (logenabled)
         console.error(ex);
@@ -191,4 +223,33 @@ function imageIsAccepted(image) {
   let isPNG = src.startsWith("data:image/png") || src.endsWith(".png");
   let isBMP = src.startsWith("data:image/bmp") || src.endsWith(".bmp");
   return isJPEG | isPNG | isBMP;
+}
+async function getFileFromTarget(target) {
+  let srcName = "";
+  let nameParts = target.src.match(/;filename=([^,;]*)[,;]/);
+  if (nameParts) {
+    srcName = decodeURIComponent(nameParts[1]);
+  }
+
+  let response = await fetch(target.src);
+  let srcBlob = await response.blob();
+  return new File([srcBlob], srcName);
+}
+async function replaceTargetWithFile(target, destFile) {
+  let destURL = await new Promise(resolve => {
+    let reader = new FileReader();
+    reader.onloadend = function () {
+      let dataURL = reader.result;
+      let headerIndexEnd = dataURL.indexOf(";");
+      dataURL =
+        reader.result.substring(0, headerIndexEnd) + ";filename=" + encodeURIComponent(changeExtensionIfNeeded(destFile.name)) + dataURL.substring(headerIndexEnd);
+      resolve(dataURL);
+    };
+    reader.readAsDataURL(destFile);
+  });
+
+  target.setAttribute("src", destURL);
+  target.removeAttribute("width");
+  target.removeAttribute("height");
+  target.setAttribute("shrunked:resized", "true");
 }

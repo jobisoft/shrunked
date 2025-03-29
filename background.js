@@ -1,5 +1,7 @@
 var tabMap = new Map();
 let logenabled=true;
+let lastContextClickedFile;
+
 async function shouldResize(attachment, checkSize = true) {
   if (!attachment.name.toLowerCase().match(/((\.jpe?g)|(\.png)|(\.bmp))$/)) {
     return false;
@@ -21,10 +23,9 @@ loadOptions().then((response)=>
   defaults=response.defaults;
   fileSizeMinimum=response.fileSizeMinimum;
   logenabled=response.options.logenabled;
-  contextInfo=response.options.contextInfo;
   if(logenabled)
     console.info("Shrunked Extension: Debug is enabled");
-  browser.shrunked.setOptions(logenabled,contextInfo);
+  browser.shrunked.setOptions(logenabled, options.contextInfo);
 });
 browser.shrunked.migrateSettings().then(prefsToStore => {
   if (prefsToStore) {
@@ -58,6 +59,20 @@ browser.runtime.onMessage.addListener(async (message, sender, callback) => {
       await processAllAttachments(sender.tab,null,true);
     return options;
   }
+  // Content script wants to update the context menu for the composer.
+  if (message.type == "updateComposeContextMenuEntry") {
+    await browser.menus.update(
+      "composeContextMenuEntry",
+      {
+        title: browser.i18n.getMessage(message.composeContextMenuEntryStatus.label),
+        enabled: !message.composeContextMenuEntryStatus.disabled,
+      }
+    );
+    await browser.menus.refresh();
+    lastContextClickedFile = message.file;
+    return;
+  }
+
   return undefined;
 });
 
@@ -76,7 +91,7 @@ browser.compose.onAttachmentAdded.addListener(async (tab, attachment) => {
   let file = await browser.compose.getAttachmentFile(attachment.id);
   //tell beginResize that this is not inline and that this event should trigger auto resize
   let destFile = await beginResize(tab, file,true,false,true);
-  if (destFile === null || destFile === undefined) {
+  if (!destFile) {
     return;
   }
   
@@ -87,16 +102,34 @@ browser.compose.onAttachmentAdded.addListener(async (tab, attachment) => {
 });
 
 // Content context menu item.
-browser.shrunked.onComposeContextClicked.addListener(async (tab, file) => {
-  tabMap.delete(tab.id);
-  return new Promise((resolve, reject) => {
-    beginResize(tab, file, false).then(resolve, reject).catch(error => {
+browser.menus.create({
+  id: "composeContextMenuEntry",
+  contexts: ["compose_body"],
+  title: browser.i18n.getMessage("context.single"),
+})
+browser.menus.onClicked.addListener(async (info, tab) => {
+  if (info.menuItemId == "composeContextMenuEntry") {
+    // CHECK: Should this be prevented, if there is already an open resize popup?
+
+    // Abort any pending resize promises, there could be one from the mutation
+    // observer in the content script registering the image being inserted.
+    cancelResize(tab.id);
+
+    beginResize(tab, lastContextClickedFile, false, true).then(destFile => {
+      if (!destFile) {
+        return;
+      }
+      browser.tabs.sendMessage(tab.id, {
+        type: "replaceTargetWithFile",
+        file: destFile
+      });
+    }).catch(error => {
       if(logenabled)
-        console.error('onComposeContextClicked', error);
+        console.error('composeContextMenuEntry clicked', error);
     });
     showOptionsDialog(tab);
-  });
-});
+  }
+})
 
 // Attachment menu item.
 browser.shrunked.onAttachmentContextClicked.addListener(async (tab, indicies) => {
@@ -148,7 +181,7 @@ async function processAllAttachments(tab, details,isOnDemand=false) {
     if (await shouldResize(a)) {
       let file = await browser.compose.getAttachmentFile(a.id);
       let promise = beginResize(tab, file, isOnDemand,false,true).then(async destFile => {
-        if (destFile === null) {
+        if (!destFile) {
           return;
         }
         await browser.compose.updateAttachment(tab.id, a.id, { file: destFile, name: changeExtensionIfNeeded(destFile.name) });
@@ -326,11 +359,10 @@ browser.tabs.onCreated.addListener(tab => {
       options=response.options;
       defaults=response.defaults;
       logenabled=response.options.logenabled;
-      contextInfo=response.options.contextInfo;
       if(logenabled)
         console.info("Shrunked Extension: Debug is enabled");
-      browser.shrunked.setOptions(logenabled,contextInfo);
-    });   
+      browser.shrunked.setOptions(logenabled, options.contextInfo);
+    });
   }
 });
 function changeExtensionIfNeeded(filename) {

@@ -6,7 +6,7 @@
   "applications": {
     "gecko": {
       "id": "shrunked@mllr.pl",
-      "strict_min_version": "126.0"
+      "strict_min_version": "128.0"
     }
   },
   "author": "Geoff Lankow, memeller",
@@ -18,9 +18,10 @@
   },
   "default_locale": "en",
   "background": {
+    "type": "module",
     "scripts": ["background.js"]
   },
-  "permissions": ["compose", "storage", "tabs"],
+  "permissions": ["compose", "storage", "tabs", "menus"],
   "options_ui": {
     "page": "content/config.xhtml"
   },
