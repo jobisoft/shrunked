@@ -4,18 +4,23 @@ let config = {
   characterData: false,
   subtree: true,
 };
+
 let resizeWhenForwardReply= false;
 let logenabled = false;
+let utils;
 async function startup(){
-  browser.runtime.sendMessage({
+  utils = await import(browser.runtime.getURL("/modules/utils.mjs"));
+
+  let response = await browser.runtime.sendMessage({
     type: "getOptions",
-  }).then((response)=>{
-    resizeWhenForwardReply=response["resizeInReplyForward"];
-    logenabled = response["logenabled"];
-    if(resizeWhenForwardReply) 
-      parseInlineAtStart();
   })
   
+  resizeWhenForwardReply=response["resizeInReplyForward"];
+  logenabled = response["logenabled"];
+  if(resizeWhenForwardReply) {
+    parseInlineAtStart();
+  }
+
   // Listener to evaluate context clicked elements.
   document.addEventListener("contextmenu", async (e) => {
     let composeContextMenuEntryStatus = {
@@ -32,7 +37,7 @@ async function startup(){
         console.log("Context menu on an <IMG>");
       }
 
-      if (imageIsAccepted(target)) {
+      if (utils.imageIsAccepted(target.src)) {
         if (target.width > 500 || target.height > 500) {
           composeContextMenuEntryStatus.disabled = false;
         } else {
@@ -75,6 +80,7 @@ async function startup(){
   })
 }
 startup();
+
 let observer = new MutationObserver(function(mutations) {
   for (let mutation of mutations) {
     if (mutation.addedNodes && mutation.addedNodes.length) {
@@ -150,7 +156,7 @@ async function maybeResizeInline(target) {
           console.log("Not resizing - image already has shrunked attribute");
         return;
       }
-      if (!imageIsAccepted(target)) {
+      if (!utils.imageIsAccepted(target.src)) {
         if (logenabled)
           console.log("Not resizing - image is not JPEG / PNG / BMP");
         return;
@@ -189,7 +195,7 @@ async function maybeResizeInline(target) {
         return;
       });
 
-      if (destFile === null || destFile === undefined) {
+      if (!destFile) {
         return;
       }
       
@@ -206,24 +212,7 @@ async function maybeResizeInline(target) {
     }
   }
 }
-function changeExtensionIfNeeded(filename){
-  let src=filename.toLowerCase();
-  //if it is a bmp we will save it as jpeg
-  if (src.startsWith("data:image/bmp")  || src.endsWith(".bmp"))
-  {
-    return src.replace("bmp","jpg");
-  }
-  else
-    return src;
-  
-}
-function imageIsAccepted(image) {
-  let src = image.src.toLowerCase();
-  let isJPEG = src.startsWith("data:image/jpeg") || src.endsWith(".jpg") || src.endsWith(".jpeg");
-  let isPNG = src.startsWith("data:image/png") || src.endsWith(".png");
-  let isBMP = src.startsWith("data:image/bmp") || src.endsWith(".bmp");
-  return isJPEG | isPNG | isBMP;
-}
+
 async function getFileFromTarget(target) {
   let srcName = "";
   let nameParts = target.src.match(/;filename=([^,;]*)[,;]/);
@@ -242,7 +231,7 @@ async function replaceTargetWithFile(target, destFile) {
       let dataURL = reader.result;
       let headerIndexEnd = dataURL.indexOf(";");
       dataURL =
-        reader.result.substring(0, headerIndexEnd) + ";filename=" + encodeURIComponent(changeExtensionIfNeeded(destFile.name)) + dataURL.substring(headerIndexEnd);
+        reader.result.substring(0, headerIndexEnd) + ";filename=" + encodeURIComponent(utils.changeExtensionIfNeeded(destFile.name)) + dataURL.substring(headerIndexEnd);
       resolve(dataURL);
     };
     reader.readAsDataURL(destFile);

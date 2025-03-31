@@ -1,14 +1,4 @@
-/* globals ChromeWorker, fetch, File, URL */
-const lazy = {};
-/* globals ExifData, OS, Services */
-ChromeUtils.defineESModuleGetters(lazy, {
-
-OS: "resource://gre/modules/osfile.sys.mjs",
-});
-import {ExifData} from "resource://shrunked/ExifData.sys.mjs";
-const Services = globalThis.Services;
-
-var XHTMLNS = "http://www.w3.org/1999/xhtml";
+import { ExifData } from "/modules/ExifData.mjs";
 
 export function ShrunkedImage(source, maxWidth, maxHeight, quality, options) {
   this.maxWidth = maxWidth;
@@ -27,36 +17,9 @@ export function ShrunkedImage(source, maxWidth, maxHeight, quality, options) {
     ...options,
   };
 
-  if (typeof source == "string") {
-    this.sourceURI = Services.io.newURI(source);
-    if (this.sourceURI.schemeIs("file")) {
-      let file = this.sourceURI.QueryInterface(Ci.nsIFileURL).file;
-      this.path = file.path;
-      this.basename = file.leafName;
-    } else if (this.sourceURI.schemeIs("data")) {
-      let meta = source.substring(0, source.indexOf(",")).split(";");
-      for (let part of meta) {
-        if (part.startsWith("filename=")) {
-          this.basename = decodeURIComponent(part.substring(9));
-        }
-      }
-    } else {
-      let match = /[?&]filename=([\w.-]+)/.exec(this.sourceURI.spec);
-      if (match) {
-        this.basename = match[1];
-      } else {
-        match =/\/([\w.-]+\.(jpe?g|png|bmp))$/i.exec(this.sourceURI.spec);
-        if (match) {
-          this.basename = match[1];
-        }
-      }
-    }
-  } else if (source instanceof Ci.nsIFile) {
-    this.sourceURI = Services.io.newFileURI(source);
-    this.path = source.path;
-    this.basename = source.leafName;
-  } else if (source instanceof File) {
-    this.sourceURI = Services.io.newURI(URL.createObjectURL(source));
+  if (source instanceof File) {
+    this.objectURL = URL.createObjectURL(source)
+    this.sourceURI = new URL(this.objectURL);
     this.basename = source.name;
   }
   if(this.basename.endsWith(".png"))
@@ -67,6 +30,7 @@ export function ShrunkedImage(source, maxWidth, maxHeight, quality, options) {
     throw new Error("Unexpected source passed to ShrunkedImage");
   }
 }
+
 ShrunkedImage.prototype = {
   async resize() {
     let orientation = 0;
@@ -91,9 +55,9 @@ ShrunkedImage.prototype = {
     try {
       let readable;
       if (this.sourceURI.schemeIs("file")) {
-        readable = await OS.File.open(this.path, { read: true });
+        throw new Error("Unexpected source passed to ShrunkedImage");
       } else {
-        readable = await Readable(this.sourceURI.spec);
+        readable = await Readable(this.objectURL);
       }
       
       this.exifData = new ExifData();
@@ -104,20 +68,20 @@ ShrunkedImage.prototype = {
       delete this.exifData;
     }
   },
-  loadImage() {
-    return new Promise((resolve, reject) => {
-      let image = getWindow().document.createElementNS(XHTMLNS, "img");
-      image.onload = function() {
-        // https://bugzilla.mozilla.org/show_bug.cgi?id=574330#c54
-        if (!image.complete) {
-          image.src = image.src; // eslint-disable-line no-self-assign
-          return;
-        }
-        resolve(image);
-      };
-      image.onerror = reject;
-      image.src = this.sourceURI.spec;
-    });
+  async loadImage() {
+    let done = Promise.withResolvers();
+    let image = document.createElement("img");
+    image.onload = function() {
+      // https://bugzilla.mozilla.org/show_bug.cgi?id=574330#c54
+      if (!image.complete) {
+        image.src = image.src; // eslint-disable-line no-self-assign
+        return;
+      }
+      done.resolve(image);
+    };
+    image.onerror = done.reject;
+    image.src = this.objectURL;
+    return done.promise;
   },
   drawOnCanvas(image, orientation, resample = true) {
     return new Promise(resolve => {
@@ -140,7 +104,7 @@ ShrunkedImage.prototype = {
         [width, height] = [height, width];
       }
 
-      let canvas = getWindow().document.createElementNS(XHTMLNS, "canvas");
+      let canvas = document.createElement("canvas");//NS(XHTMLNS, "canvas");
       canvas.width = newResampling ? image.width : (Math.floor(width * resampleRatio));
       canvas.height = newResampling ? image.height : (Math.floor(height * resampleRatio));
       let context = canvas.getContext("2d");
@@ -170,7 +134,7 @@ ShrunkedImage.prototype = {
           canvas.height = height;
           let newData = context.createImageData(canvas.width, canvas.height);
 
-          let worker = new ChromeWorker("resource://shrunked/worker.js");
+          let worker = new Worker("/modules/worker.js");
           worker.onmessage = function(event) {
             context.putImageData(event.data, 0, 0);
             resolve(canvas);
@@ -193,8 +157,8 @@ ShrunkedImage.prototype = {
           let oldData = context.getImageData(0, 0, canvas.width, canvas.height).data;
           canvas.width = width;
           canvas.height = height;
-          let newData = context.createImageData(canvas.width, canvas.height);      
-          let worker = new ChromeWorker("resource://shrunked/worker2.js");
+          let newData = context.createImageData(canvas.width, canvas.height);
+          let worker = new Worker("/modules/worker2.js");
           worker.onmessage = function (event) {
             var data = newData.data;
             var length = data.length;
@@ -227,11 +191,11 @@ ShrunkedImage.prototype = {
       );
     });
   },
-  estimateSize() {
-    return this.loadImage()
-      .then(image => this.drawOnCanvas(image, 0, false))
-      .then(canvas => this.getBytes(canvas))
-      .then(bytes => bytes.size);
+  async estimateSize() {
+    let image = await this.loadImage();
+    let canvas = await this.drawOnCanvas(image, 0, false);
+    let bytes = await this.getBytes(canvas);
+    return bytes.size;
   },
 };
 
@@ -260,8 +224,4 @@ async function Readable(url) {
       delete this.data;
     },
   };
-}
-
-function getWindow() {
-  return Services.wm.getMostRecentWindow("mail:3pane");
 }

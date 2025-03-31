@@ -9,21 +9,6 @@
         "parameters": []
       },
       {
-        "name": "setOptions",
-        "type": "function",
-        "async": true,
-        "parameters": [
-          {
-            "name": "isDebugEnabled",
-            "type": "boolean"
-          },
-          {
-            "name": "isContextInfoEnabled",
-            "type": "boolean"
-          }
-        ]
-      },
-      {
         "name": "showNotification",
         "type": "function",
         "async": true,
@@ -33,97 +18,6 @@
             "$ref": "tabs.Tab"
           },
           {
-            "type": "integer"
-          }
-        ]
-      },
-      {
-        "name": "resizeFile",
-        "type": "function",
-        "async": true,
-        "parameters": [
-          {
-            "type": "object",
-            "isInstanceOf": "File",
-            "additionalProperties": true
-          },
-          {
-            "name": "maxWidth",
-            "type": "integer"
-          },
-          {
-            "name": "maxHeight",
-            "type": "integer"
-          },
-          {
-            "name": "quality",
-            "type": "integer"
-          },
-          {
-            "name": "options",
-            "type": "object",
-            "properties": {
-              "exif": {
-                "type": "boolean",
-                "optional": true
-              },
-              "orientation": {
-                "type": "boolean",
-                "optional": true
-              },
-              "gps": {
-                "type": "boolean",
-                "optional": true
-              },
-              "resample": {
-                "type": "boolean",
-                "optional": true
-              },
-              "newalgorithm": {
-                "type": "boolean",
-                "optional": true
-              },
-              "logenabled":{
-                "type":"boolean",
-                "optional":true
-              },
-              "contextInfo":{
-                "type":"boolean",
-                "optional":true
-              },
-              "resizeInReplyForward":{
-                "type":"boolean",
-                "optional":true
-              },
-              "autoResize":{
-                "type":"string",
-                "optional":true
-              }
-            },
-            "optional": true
-          }
-        ]
-      },
-      {
-        "name": "estimateSize",
-        "type": "function",
-        "async": true,
-        "parameters": [
-          {
-            "type": "object",
-            "isInstanceOf": "File",
-            "additionalProperties": true
-          },
-          {
-            "name": "maxWidth",
-            "type": "integer"
-          },
-          {
-            "name": "maxHeight",
-            "type": "integer"
-          },
-          {
-            "name": "quality",
             "type": "integer"
           }
         ]
@@ -147,23 +41,6 @@
           {
             "name": "tab",
             "$ref": "tabs.Tab"
-          }
-        ]
-      },
-      {
-        "name": "onAttachmentContextClicked",
-        "type": "function",
-        "parameters": [
-          {
-            "name": "tab",
-            "$ref": "tabs.Tab"
-          },
-          {
-            "name": "indicies",
-            "type": "array",
-            "items": {
-              "type": "integer"
-            }
           }
         ]
       }

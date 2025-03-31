@@ -1,6 +1,12 @@
+import * as utils from "./modules/utils.mjs"
+
 var tabMap = new Map();
 let logenabled=true;
 let lastContextClickedFile;
+// I could slap the WECG for this stupid specification, but yes, menus.onHidden
+// does not report which menu items were actually hidden. We have to keep track
+// of the last shown one on our own.
+let lastShownMenuIds;
 
 async function shouldResize(attachment, checkSize = true) {
   if (!attachment.name.toLowerCase().match(/((\.jpe?g)|(\.png)|(\.bmp))$/)) {
@@ -16,7 +22,7 @@ async function shouldResize(attachment, checkSize = true) {
 let options={}
 let defaults={}
 let fileSizeMinimum=100;
-//check options on start and forward the logenabled/contextinfo setting to shrunked api
+//check options on start
 loadOptions().then((response)=>
 {
   options=response.options;
@@ -25,8 +31,11 @@ loadOptions().then((response)=>
   logenabled=response.options.logenabled;
   if(logenabled)
     console.info("Shrunked Extension: Debug is enabled");
-  browser.shrunked.setOptions(logenabled, options.contextInfo);
 });
+// CHECK: Should the migration code not run *before* the options are loaded? The
+//        execution flow should probably be enforced by awaiting each statement
+//        and not spinning of the then() action at an arbitrary time later (once
+//        the background runs into the first await or is done).
 browser.shrunked.migrateSettings().then(prefsToStore => {
   if (prefsToStore) {
     browser.storage.local.set(prefsToStore);
@@ -52,7 +61,7 @@ browser.runtime.onMessage.addListener(async (message, sender, callback) => {
   }
   // Options window starting resize.
   if (message.type == "doResize") {
-    doResize(message.tabId, message.maxWidth, message.maxHeight, message.quality);
+    return doResize(message.tabId, message.maxWidth, message.maxHeight, message.quality);
   }
   if (message.type == "getOptions") {
     if(options.resizeInReplyForward)
@@ -97,7 +106,7 @@ browser.compose.onAttachmentAdded.addListener(async (tab, attachment) => {
   
   await browser.compose.updateAttachment(tab.id, attachment.id, {
     file: destFile,
-    name: changeExtensionIfNeeded(destFile.name)
+    name: utils.changeExtensionIfNeeded(destFile.name)
   });
 });
 
@@ -107,7 +116,115 @@ browser.menus.create({
   contexts: ["compose_body"],
   title: browser.i18n.getMessage("context.single"),
 })
+// Attachment context menu item.
+browser.menus.create({
+  id: "attachmentContextMenuEntry",
+  contexts: ["compose_attachments"],
+  title: browser.i18n.getMessage("context.single"),
+})
+browser.menus.onShown.addListener(async (info, tab) => {
+  lastShownMenuIds = info.menuIds;
+  if (lastShownMenuIds.includes("attachmentContextMenuEntry")) {
+    let indicies = [];
+    for (let i = 0; i < info.attachments.length; i++) {
+      if (utils.imageIsAccepted(info.attachments[i].name)) {
+        indicies.push(i);
+      }
+    }
+
+    // Check if a message should be displayed when accessing context menu on
+    // unsupported images. If yes then set hidden to true, if not set it to disabled.
+    let attachmentContextMenuEntryStatus = {
+      enabled: true,
+      visible: true,
+      label: "context.single",
+    }
+    // Get the current value. The user might have flipped the setting while the
+    // compose window was open and we would not have the correct value in the
+    // pre-loaded options object.
+    let { "options.contextInfo": contextInfo } = await browser.storage.local.get({
+      "options.contextInfo": true
+    });
+    if (contextInfo) {
+      attachmentContextMenuEntryStatus.enabled = !!indicies.length;
+      attachmentContextMenuEntryStatus.visible = true;
+    } else {
+      attachmentContextMenuEntryStatus.enabled = true;
+      attachmentContextMenuEntryStatus.visible = !!indicies.length;
+    }
+
+    if (!indicies.length) {
+      if (logenabled) {
+        console.log("Not resizing - no attachments were JPEG/PNG/BMP and large enough");
+      }
+      attachmentContextMenuEntryStatus.label = "context.unsupportedFile";
+    } else if (indicies.length == 1) {
+      attachmentContextMenuEntryStatus.label = "context.single";
+    } else {
+      attachmentContextMenuEntryStatus.label = "context.plural";
+    }
+
+    // Only update the menu, if it is different from the default.
+    if (
+      attachmentContextMenuEntryStatus.label != "context.single" ||
+      !attachmentContextMenuEntryStatus.enabled ||
+      !attachmentContextMenuEntryStatus.visible
+    ) {
+        await browser.menus.update(
+        "attachmentContextMenuEntry",
+        {
+          title: browser.i18n.getMessage(attachmentContextMenuEntryStatus.label),
+          enabled: attachmentContextMenuEntryStatus.enabled,
+          visible: attachmentContextMenuEntryStatus.visible,
+        }
+      );
+      await browser.menus.refresh();
+    }
+  }
+  // The onShown event for composeContextMenuEntry is handled in the compose
+  // script, because we need to know which element was clicked on.
+});
+browser.menus.onHidden.addListener(() => {
+  // Unhide the menu item, so it will trigger onShown again. Also set it to the
+  // default.
+  if (lastShownMenuIds.includes("attachmentContextMenuEntry")) {
+    browser.menus.update(
+      "attachmentContextMenuEntry",
+      {
+        title: browser.i18n.getMessage("context.single"),
+        visible: true,
+        enabled: true,
+      }
+    );
+  }
+})
 browser.menus.onClicked.addListener(async (info, tab) => {
+  if (info.menuItemId == "attachmentContextMenuEntry") {
+    // CHECK: Should this be prevented, if there is already an open resize popup?
+    if (!info.attachments.length) {
+      return;
+    }
+
+    // Abort any pending resize promises.
+    cancelResize(tab.id);
+
+    for (let attachment of info.attachments) {
+      if (await shouldResize(attachment, false)) {
+        let file = await browser.compose.getAttachmentFile(attachment.id);
+        beginResize(tab, file, false).then(destFile => {
+          if (!destFile) {
+            return;
+          }
+          browser.compose.updateAttachment(tab.id, attachment.id, { file: destFile, name: utils.changeExtensionIfNeeded(destFile.name) });
+        }).catch(error => {
+          if(logenabled)
+            console.error('attachmentContextMenuEntry clicked', error);
+        });
+      }
+    }
+    showOptionsDialog(tab);
+  }
+
   if (info.menuItemId == "composeContextMenuEntry") {
     // CHECK: Should this be prevented, if there is already an open resize popup?
 
@@ -130,33 +247,6 @@ browser.menus.onClicked.addListener(async (info, tab) => {
     showOptionsDialog(tab);
   }
 })
-
-// Attachment menu item.
-browser.shrunked.onAttachmentContextClicked.addListener(async (tab, indicies) => {
-  if (!indicies.length) {
-    return;
-  }
-
-  tabMap.delete(tab.id);
-  let attachments = await browser.compose.listAttachments(tab.id);
-  for (let i of indicies) {
-    let a = attachments[i];
-    if (await shouldResize(a, false)) {
-      let file = await browser.compose.getAttachmentFile(a.id);
-      beginResize(tab, file, false).then(destFile => {
-        if (destFile === null) {
-          return;
-        }
-        browser.compose.updateAttachment(tab.id, a.id, { file: destFile, name: changeExtensionIfNeeded(destFile.name) });
-      }).catch(error => {
-        if(logenabled)
-          console.error('onAttachmentContextClicked', error);
-      });;
-    }
-  }
-
-  showOptionsDialog(tab);
-});
 
 // Message sending.
 browser.compose.onBeforeSend.addListener(async (tab, details) => {
@@ -184,7 +274,7 @@ async function processAllAttachments(tab, details,isOnDemand=false) {
         if (!destFile) {
           return;
         }
-        await browser.compose.updateAttachment(tab.id, a.id, { file: destFile, name: changeExtensionIfNeeded(destFile.name) });
+        await browser.compose.updateAttachment(tab.id, a.id, { file: destFile, name: utils.changeExtensionIfNeeded(destFile.name) });
       }).catch(error => {
         if(logenabled)
           console.error('onBeforeSend', error);
@@ -273,7 +363,7 @@ async function doResize(tabId, maxWidth, maxHeight, quality,file="") {
   for (let source of sourceFiles) {
     if(file!="" && source.file!=file)
     continue;
-    let destFile = await browser.shrunked.resizeFile(
+    let destFile = await utils.resizeFile(
       source.file,
       maxWidth,
       maxHeight,
@@ -361,17 +451,6 @@ browser.tabs.onCreated.addListener(tab => {
       logenabled=response.options.logenabled;
       if(logenabled)
         console.info("Shrunked Extension: Debug is enabled");
-      browser.shrunked.setOptions(logenabled, options.contextInfo);
     });
   }
 });
-function changeExtensionIfNeeded(filename) {
-  let src = filename.toLowerCase();
-  //if it is a bmp we will save it as jpeg
-  if (src.startsWith("data:image/bmp") || src.endsWith(".bmp")) {
-    return src.replace("bmp", "jpg");
-  }
-  else
-    return src;
-
-}
