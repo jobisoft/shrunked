@@ -1,4 +1,10 @@
 # Changelog  
+## v5.10.1
+
+- Fixed EXIF
+- Merged #45, #43 from @jobisoft - thanks for contributing! These two fix #44 and move most of the extension out of experiment
+
+
 ## v5.9.2
 
 - Fixed EXIF import
